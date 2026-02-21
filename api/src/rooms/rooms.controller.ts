@@ -136,6 +136,27 @@ export class RoomsController {
     return { success: true };
   }
 
+  @Get(':id')
+  async getRoom(@Param('id') id: string, @Req() req: any): Promise<any> {
+    const room = await this.rooms.findByIdOrSlug(id);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
+    const isMember = await this.rooms.isMember(roomId, req.user.sub);
+    if (!isMember) throw new ForbiddenException('Not a member of this room');
+
+    const state = await this.rooms.getRoomReadState([roomId], req.user.sub);
+    const lastReadAt = state[0]?.lastReadAt ? new Date(state[0].lastReadAt) : undefined;
+    const unreadCount = await this.rooms.getUnreadCount(roomId, lastReadAt);
+
+    return {
+      ...room,
+      unreadCount,
+      lastReadMessageId: state[0]?.lastReadMessageId,
+      lastReadAt: state[0]?.lastReadAt,
+    };
+  }
+
   @Post(':id/read')
   async markRead(
     @Param('id') roomSlug: string,
@@ -146,9 +167,11 @@ export class RoomsController {
     if (!room) throw new NotFoundException('Room not found');
     const roomId = room._id.toString();
 
+    // Guard: ignore invalid message IDs (prevents 400 for temporal client-side IDs)
     if (body.lastReadMessageId && !Types.ObjectId.isValid(body.lastReadMessageId)) {
-      throw new BadRequestException('Invalid lastReadMessageId');
+      return { roomId, ok: true, ignored: true };
     }
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) {
       return { ok: false };

@@ -118,36 +118,40 @@ export function Sidebar() {
   return (
     <div className="flex flex-col h-full bg-[var(--color-surface)]">
       {/* Header with clickable app logo */}
-      <div className="p-4 flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
+      <div className="p-5 flex items-center justify-between pb-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/50 backdrop-blur-xl sticky top-0 z-40">
         <div className="relative" ref={appMenuRef}>
           <button
             onClick={() => setAppMenuOpen((v) => !v)}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity group"
+            className="flex items-center gap-3 active:scale-95 transition-all group"
             title="Workspace menu"
           >
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-black shadow-lg group-hover:shadow-[var(--color-primary)]/30 transition-shadow">
+            <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-white font-black shadow-[0_0_20px_rgba(99,102,241,0.3)] group-hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300">
               P
             </div>
-            <span className="text-xl font-black tracking-tighter text-[var(--color-text)]">Pulse</span>
+            <span className="text-2xl font-black tracking-tighter text-[var(--color-text)]">Pulse</span>
           </button>
 
           {/* App / Workspace menu */}
           {appMenuOpen && (
-            <div className="absolute top-full left-0 mt-2 w-56 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 z-50">
-              <div className="px-4 py-3 border-b border-[var(--color-border)]">
-                <p className="text-xs font-black text-[var(--color-text)]">Pulse Workspace</p>
-                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">Real-time chat platform</p>
+            <div className="absolute top-full left-0 mt-3 w-64 glass-morphism rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+              <div className="px-5 py-4 border-b border-[var(--glass-border)]">
+                <p className="text-sm font-black text-[var(--color-text)]">Pulse Workspace</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">Real-time chat platform</p>
               </div>
-              <div className="py-1">
+              <div className="py-2">
                 <Link href="/rooms/new" onClick={() => setAppMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors">
-                  <HiPlus className="w-4 h-4 text-[var(--color-primary)]" />
+                  className="flex items-center gap-4 px-5 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-all">
+                  <div className="p-2 rounded-lg bg-[var(--color-primary)]/10">
+                    <HiPlus className="w-5 h-5 text-[var(--color-primary)]" />
+                  </div>
                   New Room
                 </Link>
                 <button
                   onClick={() => { toggleTheme(); setAppMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors">
-                  {theme === 'dark' ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" /> : <HiMoon className="w-4 h-4 text-[var(--color-primary)]" />}
+                  className="w-full flex items-center gap-4 px-5 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-all">
+                  <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-[var(--color-warning)]/10' : 'bg-[var(--color-primary)]/10'}`}>
+                    {theme === 'dark' ? <HiSun className="w-5 h-5 text-[var(--color-warning)]" /> : <HiMoon className="w-5 h-5 text-[var(--color-primary)]" />}
+                  </div>
                   {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                 </button>
               </div>
@@ -155,32 +159,32 @@ export function Sidebar() {
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {/* Theme quick toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            className="p-2.5 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:scale-110 active:scale-90 transition-all"
             title="Toggle theme"
           >
-            {theme === 'dark' ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" /> : <HiMoon className="w-4 h-4" />}
+            {theme === 'dark' ? <HiSun className="w-5 h-5 text-[var(--color-warning)]" /> : <HiMoon className="w-5 h-5" />}
           </button>
 
           {/* New room */}
           <Link href="/rooms/new" title="New room">
-            <button className="p-2 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">
-              <HiPlus className="w-5 h-5" />
+            <button className="p-2.5 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:scale-110 active:scale-90 transition-all">
+              <HiPlus className="w-6 h-6" />
             </button>
           </Link>
         </div>
       </div>
 
       {/* Search */}
-      <div className="px-4 mt-3 mb-3">
+      <div className="px-5 mt-5 mb-4">
         <div className="relative group">
-          <HiMagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors pointer-events-none" />
+          <HiMagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] group-focus-within:scale-110 transition-all pointer-events-none" />
           <input
-            className="w-full bg-[var(--color-surface-2)] border border-transparent focus:bg-[var(--color-surface)] focus:border-[var(--color-primary)]/30 focus:ring-4 focus:ring-[var(--color-primary)]/5 rounded-full pl-10 pr-4 py-2 text-sm transition-all duration-300 outline-none placeholder:text-[var(--color-text-muted)]/60 text-[var(--color-text)]"
-            placeholder="Search rooms..."
+            className="w-full bg-[var(--color-surface-2)] border-2 border-transparent focus:bg-[var(--color-surface)] focus:border-[var(--color-primary)] focus:ring-8 focus:ring-[var(--color-primary)]/5 rounded-2xl pl-12 pr-4 py-3 text-sm font-medium transition-all duration-300 outline-none placeholder:text-[var(--color-text-muted)]/50 text-[var(--color-text)] shadow-inner"
+            placeholder="Search channels..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -188,64 +192,71 @@ export function Sidebar() {
       </div>
 
       {/* Room list */}
-      <div className="flex-1 overflow-y-auto pb-4 scrollbar-hide space-y-1">
+      <div className="flex-1 overflow-y-auto pb-6 space-y-2 modern-scroll">
         {groupRooms.length > 0 && (
-          <section>
+          <section className="px-2">
             <button
               onClick={() => setChannelsOpen(!channelsOpen)}
-              className="w-full flex items-center gap-2 px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
+              className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
             >
-              {channelsOpen ? <HiChevronDown className="w-3 h-3" /> : <HiChevronRight className="w-3 h-3" />}
-              <HiHashtag className="w-3 h-3" />
+              {channelsOpen ? <HiChevronDown className="w-3.5 h-3.5" /> : <HiChevronRight className="w-3.5 h-3.5" />}
+              <HiHashtag className="w-4 h-4" />
               <span>Channels</span>
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ${channelsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`overflow-hidden space-y-0.5 transition-all duration-500 ease-in-out ${channelsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
               {groupRooms.map(renderRoomItem)}
             </div>
           </section>
         )}
 
         {directMessages.length > 0 && (
-          <section>
+          <section className="px-2">
             <button
               onClick={() => setDmsOpen(!dmsOpen)}
-              className="w-full flex items-center gap-2 px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
+              className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
             >
-              {dmsOpen ? <HiChevronDown className="w-3 h-3" /> : <HiChevronRight className="w-3 h-3" />}
-              <HiChatBubbleLeftRight className="w-3 h-3" />
-              <span>Direct Messages</span>
+              {dmsOpen ? <HiChevronDown className="w-3.5 h-3.5" /> : <HiChevronRight className="w-3.5 h-3.5" />}
+              <HiChatBubbleLeftRight className="w-4 h-4" />
+              <span>Messages</span>
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ${dmsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`overflow-hidden space-y-0.5 transition-all duration-500 ease-in-out ${dmsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
               {directMessages.map(renderRoomItem)}
             </div>
           </section>
         )}
 
         {displayList.length === 0 && (
-          <div className="px-6 py-12 text-center">
-            <div className="w-16 h-16 bg-[var(--color-surface-2)] rounded-full flex items-center justify-center mx-auto mb-4">
-              <HiUserGroup className="w-8 h-8 text-[var(--color-text-muted)]" />
+          <div className="px-8 py-16 text-center">
+            <div className="w-20 h-20 bg-[var(--color-surface-2)] rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner rotate-3 hover:rotate-6 transition-transform">
+              <HiUserGroup className="w-10 h-10 text-[var(--color-text-muted)]/50" />
             </div>
-            <p className="text-sm font-medium text-[var(--color-text-muted)] px-4">No rooms match your search</p>
+            <p className="text-sm font-bold text-[var(--color-text-muted)]/70 tracking-tight">No results found</p>
           </div>
         )}
       </div>
 
       {/* Profile section */}
-      <div className="p-3 bg-[var(--color-surface)] border-t border-[var(--color-border)] relative" ref={profileRef}>
+      <div className="p-4 bg-[var(--color-surface)]/80 backdrop-blur-lg border-t border-[var(--color-border)] relative z-40" ref={profileRef}>
         {profileOpen && (
-          <ProfileCard onClose={() => setProfileOpen(false)} />
+          <div className="absolute bottom-[calc(100%+0.5rem)] left-4 right-4 animate-in fade-in slide-in-from-bottom-4 duration-200">
+            <ProfileCard onClose={() => setProfileOpen(false)} />
+          </div>
         )}
         <button
           onClick={() => setProfileOpen((v) => !v)}
-          className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--color-surface-hover)] transition-colors group cursor-pointer"
+          className="w-full flex items-center gap-3.5 p-3 rounded-2xl hover:bg-[var(--color-surface-hover)] hover:shadow-md active:scale-[0.98] transition-all group cursor-pointer"
         >
-          <Avatar name={username || 'Me'} size={36} status="online" className="ring-2 ring-[var(--color-primary)]/20 shadow-sm shrink-0" />
-          <div className="flex-1 min-w-0 text-left">
-            <div className="text-sm font-bold truncate text-[var(--color-text)] leading-tight">{username || 'Current User'}</div>
-            <div className="text-[10px] text-[var(--color-success)] font-semibold">● Online</div>
+          <div className="relative">
+            <Avatar name={username || 'Me'} size={42} status="online" className="ring-2 ring-[var(--color-primary)]/10 shadow-md shrink-0 group-hover:scale-105 transition-transform" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--color-success)] rounded-full border-[3px] border-[var(--color-surface)] shadow-sm" />
           </div>
-          <HiSquares2X2 className="w-4 h-4 text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-sm font-black truncate text-[var(--color-text)] tracking-tight">{username || 'Current User'}</div>
+            <div className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mt-0.5">Settings</div>
+          </div>
+          <div className="p-2 rounded-lg bg-[var(--color-surface-2)] group-hover:bg-[var(--color-primary)]/10 transition-colors">
+            <HiSquares2X2 className="w-5 h-5 text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] transition-all" />
+          </div>
         </button>
       </div>
     </div>

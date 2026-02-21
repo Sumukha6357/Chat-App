@@ -42,6 +42,7 @@ export default function RoomPage() {
   const setRoomMemberReadCursors = useChatStore((s) => s.setRoomMemberReadCursors);
   const upsertUserPresence = useChatStore((s) => s.upsertUserPresence);
   const setActiveRoom = useChatStore((s) => s.setActiveRoom);
+  const migrateMessages = useChatStore((s) => s.migrateMessages);
   const setNotifications = useNotificationStore((s) => s.setItems);
 
   const [cursor, setCursor] = useState<{ id: string; createdAt: string } | null>(null);
@@ -147,6 +148,22 @@ export default function RoomPage() {
     };
   }, [roomId, mergeServerMessages, setActiveRoom, rooms, auth.userId, upsertUserPresence, setRoomMemberReadCursors]);
 
+  // Migrate messages if key changes from slug to ID
+  useEffect(() => {
+    if (slugOrId && roomId && slugOrId !== roomId) {
+      migrateMessages(slugOrId, roomId);
+    }
+  }, [slugOrId, roomId, migrateMessages]);
+
+  // Pre-fetch room by slug if not in store
+  useEffect(() => {
+    if (slugOrId && !currentRoom && slugOrId !== 'new') {
+      apiRequest<any>(`/rooms/${slugOrId}`, { auth: true }).then((data) => {
+        setRooms([...rooms, data]);
+      }).catch(() => { });
+    }
+  }, [slugOrId, currentRoom, rooms, setRooms]);
+
   useEffect(() => {
     if (!roomId || roomId === 'new') return;
     if (!auth.accessToken) return;
@@ -208,6 +225,8 @@ export default function RoomPage() {
 
   const markRead = (lastReadMessageId?: string, lastReadAt?: string) => {
     if (!roomId || !lastReadMessageId || !lastReadAt) return;
+    // Don't mark read if the ID is a client-side temporary ID
+    if (lastReadMessageId.startsWith('msg_')) return;
     const now = Date.now();
     if (now - lastMarkRef.current < 2000) return;
     lastMarkRef.current = now;

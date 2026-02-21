@@ -79,65 +79,81 @@ export function MessageInput({ roomId }: MessageInputProps) {
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-1">
+        <div className="flex flex-wrap gap-3 mb-1 px-4 animate-in fade-in slide-in-from-bottom-2">
           {attachments.map((att) => (
-            <div key={att.url} className="group relative w-14 h-14 rounded-xl overflow-hidden border border-[var(--color-border)] shadow-sm bg-[var(--color-surface)]">
+            <div key={att.url} className="group relative w-16 h-16 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-premium bg-[var(--color-surface)]">
               {att.type === 'image' ? (
-                <img src={att.url.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${att.url}` : att.url} className="w-full h-full object-cover" alt="" />
+                <img src={att.url.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${att.url}` : att.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-[9px] font-black uppercase text-[var(--color-text-muted)]">File</div>
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--color-surface-2)]">
+                  <div className="text-[10px] font-black uppercase text-[var(--color-text-muted)]">File</div>
+                </div>
               )}
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
               <button
                 onClick={() => removeAttachment(att.url)}
-                className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 p-1 rounded-full bg-[var(--color-danger)] text-white shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-90"
               >
-                <HiXMark className="w-3 h-3" />
+                <HiXMark className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
           {isUploading && (
-            <div className="w-14 h-14 rounded-xl border border-dashed border-[var(--color-border)] flex items-center justify-center bg-[var(--color-surface)]">
-              <div className="w-4 h-4 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-[var(--color-primary)]/30 flex items-center justify-center bg-[var(--color-primary)]/5 animate-pulse">
+              <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
             </div>
           )}
         </div>
       )}
 
-      <div className="flex items-end gap-2 bg-[var(--color-surface)] rounded-2xl px-2 py-1.5 border border-[var(--color-border)] focus-within:border-[var(--color-primary)]/40 focus-within:ring-4 focus-within:ring-[var(--color-primary)]/5 transition-all duration-200">
-        <label className="p-2 rounded-xl cursor-pointer text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-primary)] transition-colors">
-          <HiPaperClip className="w-5 h-5" />
-          <input type="file" className="hidden" onChange={onUpload} disabled={isUploading} />
-        </label>
+      <div className="mx-4 mb-4">
+        <div className="flex items-end gap-3 glass-morphism rounded-[var(--radius-xl)] px-3 py-2.5 shadow-premium focus-within:shadow-[0_0_30px_rgba(99,102,241,0.15)] focus-within:border-[var(--color-primary)]/30 transition-all duration-300">
+          <label className="p-2.5 rounded-2xl cursor-pointer text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-primary)] hover:scale-110 active:scale-95 transition-all">
+            <HiPaperClip className="w-6 h-6" />
+            <input type="file" className="hidden" onChange={onUpload} disabled={isUploading} />
+          </label>
 
-        <textarea
-          ref={textareaRef}
-          className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 max-h-[200px] min-h-[40px] resize-none outline-none text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]/60 font-medium"
-          placeholder="Type a message..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              onSend();
-            }
-          }}
-        />
+          <textarea
+            ref={textareaRef}
+            className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2.5 px-2 max-h-[200px] min-h-[44px] resize-none outline-none text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]/50 font-medium leading-relaxed"
+            placeholder="Type your message..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onSend();
+              }
+            }}
+          />
 
-        <Button
-          variant="primary"
-          size="sm"
-          className="rounded-xl w-10 h-10 p-0 shadow-sm disabled:shadow-none transition-all active:scale-95 shrink-0"
-          onClick={onSend}
-          disabled={(!content.trim() && attachments.length === 0) || isUploading}
-        >
-          <HiPaperAirplane className="w-4 h-4 -rotate-45" />
-        </Button>
+          <button
+            className={`
+              rounded-2xl w-11 h-11 flex items-center justify-center shadow-lg transition-all duration-300 shrink-0
+              ${(!content.trim() && attachments.length === 0) || isUploading
+                ? 'bg-[var(--color-surface-3)] text-[var(--color-text-muted)] cursor-not-allowed opacity-50'
+                : 'bg-[var(--color-primary)] text-white hover:scale-110 active:scale-90 shadow-[var(--color-primary)]/30'
+              }
+            `}
+            onClick={onSend}
+            disabled={(!content.trim() && attachments.length === 0) || isUploading}
+          >
+            <HiPaperAirplane className={`w-5 h-5 -rotate-45 transition-transform ${content.trim() ? 'translate-x-0.5 -translate-y-0.5' : ''}`} />
+          </button>
+        </div>
+        <div className="flex items-center justify-between px-4 mt-2">
+          <div className="text-[10px] text-[var(--color-text-muted)]/40 font-bold uppercase tracking-widest">
+            <kbd className="opacity-60">Shift + Enter</kbd> for new line
+          </div>
+          {content.length > 500 && (
+            <div className={`text-[10px] font-bold ${content.length > 1800 ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-muted)]'}`}>
+              {content.length} / 2000
+            </div>
+          )}
+        </div>
       </div>
-      <p className="px-3 text-[10px] text-[var(--color-text-muted)]/50 font-medium">
-        <kbd className="font-mono">Shift + Enter</kbd> for new line
-      </p>
     </div>
   );
 }

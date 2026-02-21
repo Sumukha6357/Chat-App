@@ -147,133 +147,127 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
 
   return (
     <>
-      <header className="flex items-center gap-4 px-6 py-3 bg-[var(--color-surface)]/90 border-b border-[var(--color-border)] sticky top-0 z-30 shadow-sm backdrop-blur-md">
+      <header className="flex items-center gap-5 px-6 py-4 bg-[var(--color-bg)]/60 backdrop-blur-2xl border-b border-[var(--color-border)] sticky top-0 z-40 shadow-sm">
         {onBack && (
-          <Button variant="ghost" onClick={onBack} size="sm" className="md:hidden -ml-2 rounded-full w-9 h-9 p-0">
-            <HiChevronLeft className="w-5 h-5" />
-          </Button>
+          <button onClick={onBack} className="md:hidden -ml-2 p-2 rounded-full hover:bg-[var(--color-surface-2)] active:scale-90 transition-all">
+            <HiChevronLeft className="w-6 h-6" />
+          </button>
         )}
 
         {/* Clickable avatar → room settings */}
         <button
           onClick={() => setRoomSettingsOpen(true)}
-          className="relative shrink-0 group"
+          className="relative shrink-0 active:scale-95 transition-transform group"
           title="Room settings"
         >
           <Avatar
             name={title}
             status={isDirect ? otherPresence?.status : undefined}
-            size={44}
-            className="shadow-sm group-hover:ring-2 group-hover:ring-[var(--color-primary)]/40 transition-all"
+            size={48}
+            className="shadow-md ring-2 ring-transparent group-hover:ring-[var(--color-primary)]/20 transition-all"
           />
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[var(--color-surface)] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-            <HiCog6Tooth className="w-3 h-3 text-[var(--color-primary)]" />
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[var(--color-surface)] rounded-full border border-[var(--color-border)] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md">
+            <HiCog6Tooth className="w-3.5 h-3.5 text-[var(--color-primary)] animate-spin-slow" />
           </div>
         </button>
 
         <div className="min-w-0">
-          <h1 className="text-base font-bold text-[var(--color-text)] truncate leading-none mb-0.5">
+          <h1 className="text-lg font-black text-[var(--color-text)] tracking-tight truncate leading-none mb-1">
             {title}
           </h1>
-          <div className="text-xs text-[var(--color-text-muted)] truncate flex items-center gap-2 font-medium">
+          <div className="text-[11px] text-[var(--color-text-muted)] truncate flex items-center gap-2 font-bold uppercase tracking-wider">
             {/* Presence — only show if meaningful */}
             {isDirect && otherPresence ? (
-              <span className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${otherPresence?.status === 'online' ? 'bg-[var(--color-success)]' : 'bg-slate-400'}`} />
+              <span className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ring-2 ring-[var(--color-surface)] shadow-sm ${otherPresence?.status === 'online' ? 'bg-[var(--color-success)]' : 'bg-slate-400 opacity-50'}`} />
                 {presenceText}
               </span>
             ) : onlineCount > 0 ? (
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[var(--color-success)] ring-2 ring-[var(--color-surface)] shadow-sm" />
                 {presenceText}
               </span>
             ) : null}
 
-            {subtitle && presenceText && <span className="w-1 h-1 rounded-full bg-slate-300 mx-0.5" />}
-            {subtitle && <span className="uppercase tracking-widest text-[9px] font-bold opacity-70">{subtitle}</span>}
+            {subtitle && presenceText && <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />}
+            {subtitle && <span className="opacity-60">{subtitle}</span>}
           </div>
         </div>
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Call buttons (enabled only for direct) */}
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             disabled={!isDirect}
-            className="rounded-full w-9 h-9 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] disabled:opacity-30"
+            className="p-2.5 rounded-2xl hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:scale-110 active:scale-90 disabled:opacity-20 transition-all shadow-sm group"
             title="Voice Call"
             onClick={() => showToast('Calling feature coming soon...', 'info')}
           >
-            <HiPhone className="w-4 h-4" />
-          </Button>
+            <HiPhone className="w-5 h-5 group-hover:shake" />
+          </button>
 
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             disabled={!isDirect}
-            className="rounded-full w-9 h-9 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] disabled:opacity-30"
+            className="p-2.5 rounded-2xl hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:scale-110 active:scale-90 disabled:opacity-20 transition-all shadow-sm"
             title="Video Call"
             onClick={() => showToast('Video call feature coming soon...', 'info')}
           >
-            <HiVideoCamera className="w-4 h-4" />
-          </Button>
+            <HiVideoCamera className="w-5 h-5" />
+          </button>
 
-          <div className="w-px h-6 bg-[var(--color-border)] mx-1" />
+          <div className="w-px h-8 bg-[var(--color-border)] mx-1" />
 
           {failedMessages.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
+            <button
               onClick={onRetryAll}
               disabled={isRetrying || isQueueFlushing()}
-              className="gap-2 rounded-full px-4"
+              className="flex items-center gap-2 bg-[var(--color-danger)] text-white px-4 py-2 rounded-2xl text-xs font-black shadow-lg shadow-danger/20 hover:scale-105 active:scale-95 transition-all"
             >
               <HiExclamationTriangle className="w-4 h-4" />
               <span className="hidden sm:inline">Retry ({failedMessages.length})</span>
-            </Button>
+            </button>
           )}
 
-          <Button
-            variant={searchOpen ? "primary" : "ghost"}
-            size="sm"
+          <button
             onClick={onSearchToggle}
-            className={`rounded-full w-9 h-9 p-0 ${!searchOpen ? 'text-[var(--color-text-muted)]' : ''}`}
+            className={`p-2.5 rounded-2xl transition-all hover:scale-110 active:scale-90 shadow-sm ${searchOpen ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-primary/20' : 'hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)]'}`}
             title="Search"
           >
-            <HiMagnifyingGlass className="w-4 h-4" />
-          </Button>
+            <HiMagnifyingGlass className="w-5 h-5" />
+          </button>
 
           {/* 3-dots Menu */}
           <div className="relative" ref={menuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="rounded-full w-9 h-9 p-0 text-[var(--color-text-muted)]"
+              className={`p-2.5 rounded-2xl hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:scale-110 active:scale-90 transition-all shadow-sm ${menuOpen ? 'bg-[var(--color-surface-2)] text-[var(--color-text)]' : ''}`}
               title="More options"
             >
-              <HiEllipsisVertical className="w-5 h-5" />
-            </Button>
+              <HiEllipsisVertical className="w-6 h-6" />
+            </button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 z-50">
-                <div className="py-1">
+              <div className="absolute right-0 mt-3 w-56 glass-morphism rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in fade-in slide-in-from-top-3 duration-200 z-50">
+                <div className="py-2">
                   <button
                     onClick={() => { setRoomSettingsOpen(true); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                    className="w-full flex items-center gap-4 px-5 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-all"
                   >
-                    <HiInformationCircle className="w-4 h-4 text-[var(--color-primary)]" />
+                    <div className="p-2 rounded-lg bg-[var(--color-primary)]/10">
+                      <HiInformationCircle className="w-5 h-5 text-[var(--color-primary)]" />
+                    </div>
                     <span>Room Info</span>
                   </button>
 
                   <button
                     onClick={onRefresh}
                     disabled={isRefreshing}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                    className="w-full flex items-center gap-4 px-5 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-primary)]/10 transition-all"
                   >
-                    <HiArrowPath className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <div className="p-2 rounded-lg bg-[var(--color-surface-2)]">
+                      <HiArrowPath className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </div>
                     <span>Refresh Presence</span>
                   </button>
 
@@ -281,28 +275,34 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
                     <button
                       onClick={onToggleBlock}
                       disabled={isBlocking}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                      className="w-full flex items-center gap-4 px-5 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-primary)]/10 transition-all"
                     >
-                      <HiNoSymbol className={`w-4 h-4 ${isBlocked ? 'text-[var(--color-danger)]' : ''}`} />
+                      <div className={`p-2 rounded-lg ${isBlocked ? 'bg-[var(--color-danger)]/10' : 'bg-[var(--color-surface-2)]'}`}>
+                        <HiNoSymbol className={`w-5 h-5 ${isBlocked ? 'text-[var(--color-danger)]' : ''}`} />
+                      </div>
                       <span>{isBlocked ? 'Unblock User' : 'Block User'}</span>
                     </button>
                   )}
 
-                  <div className="h-px bg-[var(--color-border)] my-1" />
+                  <div className="h-px bg-[var(--glass-border)] my-2" />
 
                   <button
                     onClick={onClearChat}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-colors"
+                    className="w-full flex items-center gap-4 px-5 py-3 text-sm font-bold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-all"
                   >
-                    <HiTrash className="w-4 h-4" />
+                    <div className="p-2 rounded-lg bg-[var(--color-danger)]/10">
+                      <HiTrash className="w-5 h-5 text-[var(--color-danger)]" />
+                    </div>
                     <span>Clear Chat</span>
                   </button>
 
                   <button
                     onClick={onExitRoom}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-colors"
+                    className="w-full flex items-center gap-4 px-5 py-3 text-sm font-bold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-all"
                   >
-                    <HiArrowRightOnRectangle className="w-4 h-4" />
+                    <div className="p-2 rounded-lg bg-[var(--color-danger)]/10">
+                      <HiArrowRightOnRectangle className="w-5 h-5 text-[var(--color-danger)]" />
+                    </div>
                     <span>{isDirect ? 'Close Chat' : 'Exit Group'}</span>
                   </button>
                 </div>

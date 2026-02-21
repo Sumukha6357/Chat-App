@@ -103,6 +103,7 @@ export interface ChatState {
     map: Record<string, { status: 'online' | 'offline' | 'away'; lastSeenAt?: number }>,
   ) => void;
   setActiveRoom: (roomId?: string) => void;
+  migrateMessages: (fromRoomId: string, toRoomId: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -348,4 +349,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
   setActiveRoom: (roomId) => set({ activeRoomId: roomId }),
+  migrateMessages: (fromRoomId, toRoomId) => {
+    if (fromRoomId === toRoomId) return;
+    const fromMessages = get().messages[fromRoomId] || [];
+    const fromTyping = get().typingUsers[fromRoomId] || [];
+    if (fromMessages.length === 0 && fromTyping.length === 0) return;
+
+    set((state) => {
+      const messages = { ...state.messages };
+      const typingUsers = { ...state.typingUsers };
+
+      // Append old messages to new room key if they aren't already there
+      const existingIds = new Set((messages[toRoomId] || []).map((m) => m._id));
+      const filteredFrom = fromMessages.filter((m) => !existingIds.has(m._id));
+
+      messages[toRoomId] = [...(messages[toRoomId] || []), ...filteredFrom].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+
+      delete messages[fromRoomId];
+      delete typingUsers[fromRoomId];
+
+      return { messages, typingUsers };
+    });
+  },
 }));

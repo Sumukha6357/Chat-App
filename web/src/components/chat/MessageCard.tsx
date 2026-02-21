@@ -57,55 +57,55 @@ export function MessageCard({
 
   return (
     <div className={`
-      group flex gap-3 px-6 py-1 hover:bg-[var(--color-surface-hover)]/50 transition-colors relative
-      ${highlighted ? 'bg-[var(--color-primary)]/5 ring-1 ring-[var(--color-primary)]/10' : ''}
-      ${isFirstInGroup ? 'mt-6' : 'mt-0.5'}
+      group flex gap-3 px-6 py-1.5 hover:bg-[var(--color-surface-hover)]/30 transition-all duration-300 relative
+      ${highlighted ? 'bg-[var(--color-primary)]/5 ring-1 ring-[var(--color-primary)]/20' : ''}
+      ${isFirstInGroup ? 'mt-8' : 'mt-1'}
     `}>
       {/* Avatar column */}
-      <div className="w-10 shrink-0 flex justify-center">
+      <div className="w-12 shrink-0 flex justify-center items-end pb-1">
         {showAvatar && !isMine && isFirstInGroup ? (
-          <Avatar name={`User ${message.senderId.slice(0, 4)}`} size={36} className="shadow-sm" />
+          <Avatar name={`User ${message.senderId.slice(0, 4)}`} size={40} className="shadow-lg ring-2 ring-white/10" />
         ) : null}
       </div>
 
       {/* Content wrapper */}
       <div className={`flex-1 min-w-0 ${isMine ? 'flex flex-col items-end' : ''}`}>
         {isFirstInGroup && (
-          <div className="flex items-center gap-2 mb-1.5 px-1">
-            <span className="text-xs font-bold text-[var(--color-text)]">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <span className="text-[13px] font-black text-[var(--color-text)] tracking-tight">
               {isMine ? 'You' : `User ${message.senderId.slice(0, 6)}`}
             </span>
-            <span className="text-[10px] text-[var(--color-text-muted)] font-bold opacity-60">
+            <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest opacity-40">
               {timeStr}
             </span>
           </div>
         )}
 
-        <div className="relative group/bubble max-w-[85%] sm:max-w-[70%] flex flex-col items-end">
+        <div className="relative group/bubble max-w-[88%] sm:max-w-[75%] flex flex-col items-end">
           {/* Action Overlay */}
           <div className={`
-            absolute -top-10 opacity-0 group-hover/bubble:opacity-100 transition-opacity duration-200 z-10 flex gap-0.5 p-1 bg-white border border-[var(--color-border)] rounded-lg shadow-premium
+            absolute -top-11 opacity-0 group-hover/bubble:opacity-100 translate-y-2 group-hover/bubble:translate-y-0 transition-all duration-300 z-10 flex gap-1 p-1.5 glass-morphism rounded-2xl shadow-premium
             ${isMine ? 'right-0' : 'left-0'}
           `}>
-            <button onClick={onCopy} className="p-1.5 hover:bg-[var(--color-surface-hover)] rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors" title="Copy">
-              <HiDocumentDuplicate className="w-4 h-4" />
+            <button onClick={onCopy} className="p-2 hover:bg-[var(--color-primary)]/10 rounded-xl text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all active:scale-90" title="Copy">
+              <HiDocumentDuplicate className="w-5 h-5" />
             </button>
-            <button className="p-1.5 hover:bg-[var(--color-surface-hover)] rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors opacity-40 cursor-not-allowed" title="Reply">
-              <HiArrowUturnLeft className="w-4 h-4" />
+            <button className="p-2 hover:bg-[var(--color-primary)]/10 rounded-xl text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-all opacity-30 cursor-not-allowed" title="Reply">
+              <HiArrowUturnLeft className="w-5 h-5" />
             </button>
           </div>
 
           <div className={`
-            relative rounded-[var(--radius-lg)] px-4 py-2.5 shadow-sm text-sm leading-relaxed
+            relative rounded-[20px] px-5 py-3 shadow-premium text-[15px] leading-[1.6] transition-all duration-300
             ${isMine
-              ? 'bg-[var(--color-primary)] text-white font-medium rounded-tr-none'
-              : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text)] rounded-tl-none'
+              ? 'bg-gradient-to-br from-[var(--color-primary)] to-[#818cf8] text-white font-medium rounded-tr-none'
+              : 'glass-morphism text-[var(--color-text)] rounded-tl-none font-medium'
             }
           `}>
-            {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
+            {message.content && <p className="whitespace-pre-wrap break-words tracking-tight">{message.content}</p>}
 
             {attachments.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-3">
                 {attachments.map((att) => (
                   <AttachmentPreview key={att.url} att={att} resolveUrl={resolveUrl} isMine={isMine} />
                 ))}
@@ -114,21 +114,21 @@ export function MessageCard({
 
             {/* Inline Meta (Mobile style for isMine) */}
             <div className={`
-              flex items-center justify-end gap-1 mt-1 -mr-1 -mb-0.5 opacity-80 scale-90
+              flex items-center justify-end gap-1.5 mt-2 -mr-1 -mb-0.5 opacity-70 scale-[0.85] origin-right
               ${isMine ? 'text-white' : 'text-[var(--color-text-muted)]'}
             `}>
-              {!isFirstInGroup && <span className="text-[10px] mr-1 font-bold">{timeStr}</span>}
+              {!isFirstInGroup && <span className="text-[11px] mr-1 font-black tracking-widest uppercase">{timeStr}</span>}
 
-              {status === 'sending' && <HiArrowPath className="w-3.5 h-3.5 animate-spin" />}
-              {status === 'sent' && !showSeen && <HiCheck className="w-4 h-4" />}
-              {showSeen && <HiCheckBadge className="w-4 h-4" />}
+              {status === 'sending' && <HiArrowPath className="w-4 h-4 animate-spin" />}
+              {status === 'sent' && !showSeen && <HiCheck className="w-5 h-5" />}
+              {showSeen && <HiCheckBadge className="w-5 h-5 text-sky-400" />}
               {status === 'failed' && (
                 <button
                   onClick={() => clientMessageId && retrySendMessage(roomId, clientMessageId)}
-                  className="flex items-center gap-1 text-[var(--color-danger)] font-black hover:underline"
+                  className="flex items-center gap-1.5 text-white/90 font-black hover:scale-105 active:scale-95 transition-all bg-red-500 px-2.5 py-1 rounded-full shadow-lg"
                 >
                   <HiExclamationCircle className="w-4 h-4" />
-                  <span className="text-[10px]">Retry</span>
+                  <span className="text-[10px] uppercase tracking-widest">Retry</span>
                 </button>
               )}
             </div>
@@ -136,12 +136,14 @@ export function MessageCard({
         </div>
       </div>
 
-      {/* Unread dot column (optional) */}
-      <div className="w-12 shrink-0 hidden sm:flex items-center justify-center">
+      {/* Unread dot column */}
+      <div className="w-14 shrink-0 hidden sm:flex items-center justify-center">
         {showSeen && seenCount > 0 && (
-          <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
-            <span className="text-[9px] font-bold text-[var(--color-primary)] uppercase tracking-tighter">Seen by</span>
-            <span className="text-xs font-black text-[var(--color-primary)]">{seenCount}</span>
+          <div className="flex flex-col items-center gap-1.5 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500 pointer-events-none">
+            <span className="text-[9px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] opacity-60">Seen</span>
+            <div className="w-7 h-7 bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center text-[11px] font-black text-[var(--color-primary)] shadow-inner">
+              {seenCount}
+            </div>
           </div>
         )}
       </div>
