@@ -7,7 +7,7 @@ const BANNED_WORDS = ['slur1', 'slur2', 'slur3'];
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly messagesRepo: MessagesRepository) {}
+  constructor(private readonly messagesRepo: MessagesRepository) { }
 
   async sendMessage(data: Partial<Message>) {
     const attachments = Array.isArray(data.attachments) ? data.attachments : [];
@@ -50,6 +50,10 @@ export class MessagesService {
 
   countByRoomAfter(roomId: string, lastReadAt: Date) {
     return this.messagesRepo.countByRoomAfter(roomId, lastReadAt);
+  }
+
+  deleteByRoom(roomId: string) {
+    return this.messagesRepo.deleteByRoom(roomId);
   }
 }
 

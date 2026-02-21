@@ -8,7 +8,7 @@ export interface MessageCursor {
 }
 
 export class MessagesRepository {
-  constructor(@InjectModel(Message.name) private readonly messageModel: Model<MessageDocument>) {}
+  constructor(@InjectModel(Message.name) private readonly messageModel: Model<MessageDocument>) { }
 
   create(data: Partial<Message>) {
     return this.messageModel.create(data);
@@ -86,5 +86,9 @@ export class MessagesRepository {
 
   findById(id: string) {
     return this.messageModel.findById(id).lean();
+  }
+
+  deleteByRoom(roomId: string) {
+    return this.messageModel.deleteMany({ roomId: new Types.ObjectId(roomId) });
   }
 }

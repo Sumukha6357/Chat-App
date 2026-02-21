@@ -295,7 +295,12 @@ export default function RoomPage() {
   return (
     <AppShell sidebar={<Sidebar />}>
       <div className="flex flex-col h-full min-w-0">
-        <Header title={currentRoom?.name || 'Room'} subtitle={currentRoom?.type} />
+        <Header
+          title={currentRoom?.name || 'Room'}
+          subtitle={currentRoom?.type}
+          searchOpen={searchOpen}
+          onSearchToggle={() => setSearchOpen(!searchOpen)}
+        />
 
         <div className="flex-1 overflow-y-auto bg-[var(--color-bg)]/50 backdrop-blur-md relative" ref={scrollRef}>
           {loading && (
@@ -305,35 +310,32 @@ export default function RoomPage() {
           )}
 
           <div className="max-w-4xl mx-auto w-full">
-            <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 sticky top-0 z-10 flex items-center justify-between gap-3" ref={searchRef}>
-              {/* Inline search bar — expands on focus */}
-              <div className="flex-1 relative group">
-                <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)] pointer-events-none" />
-                <input
-                  className="w-full bg-transparent border border-transparent focus:bg-[var(--color-surface)] focus:border-[var(--color-primary)]/30 rounded-full pl-8 pr-8 py-1 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]/60 outline-none transition-all duration-200"
-                  placeholder="Search in this chat..."
-                  value={searchTerm}
-                  onFocus={() => setSearchOpen(true)}
-                  onChange={(e) => { setSearchTerm(e.target.value); setSearchOpen(true); }}
-                  onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => { setSearchTerm(''); setSearchResults([]); setSearchOpen(false); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] transition-colors"
-                  >
-                    <HiXMark className="w-3 h-3" />
-                  </button>
-                )}
+            {searchOpen && (
+              <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 sticky top-0 z-20 flex items-center justify-between gap-3 shadow-sm animate-in fade-in slide-in-from-top-2" ref={searchRef}>
+                <div className="flex-1 relative group">
+                  <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors pointer-events-none" />
+                  <input
+                    autoFocus
+                    className="w-full bg-transparent border border-transparent rounded-full pl-9 pr-8 py-1.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]/60 outline-none transition-all"
+                    placeholder="Search in this chat..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); }}
+                    onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => { setSearchTerm(''); setSearchResults([]); }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] transition-colors"
+                    >
+                      <HiXMark className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
-
-              {cursor && (
-                <Button variant="ghost" size="sm" onClick={loadMore} className="whitespace-nowrap text-xs">Load earlier</Button>
-              )}
-            </div>
+            )}
 
             {searchOpen && searchTerm && (
-              <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-md sticky top-[37px] z-10 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 mx-4 rounded-b-2xl overflow-hidden">
+              <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-md sticky top-[45px] z-10 shadow-lg animate-in fade-in slide-in-from-top-1 duration-200 mx-4 rounded-b-2xl overflow-hidden">
                 {searchResults.length > 0 ? (
                   <div className="max-h-60 overflow-y-auto p-2 space-y-1">
                     {searchResults.map((m) => (

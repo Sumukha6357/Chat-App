@@ -2,8 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
+  NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -15,11 +19,15 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
+import { MessagesService } from '../chat/messages.service';
 
 @Controller('rooms')
 @Roles('user')
 export class RoomsController {
-  constructor(private readonly rooms: RoomsService) { }
+  constructor(
+    private readonly rooms: RoomsService,
+    private readonly messages: MessagesService,
+  ) { }
 
   @Get()
   async list(@Req() req: any) {
@@ -83,6 +91,37 @@ export class RoomsController {
       }),
     );
     return enriched;
+  }
+
+  @Patch(':id')
+  async update(@Param('id') roomId: string, @Req() req: any, @Body() body: any) {
+    const isMember = await this.rooms.isMember(roomId, req.user.sub);
+    if (!isMember) throw new ForbiddenException('Not a member of this room');
+    // Simplified: only allow certain fields to be updated
+    const update: any = {};
+    if (body.name) {
+      update.name = body.name;
+      update.nameLower = body.name.toLowerCase();
+    }
+    if (body.description) update.description = body.description;
+    if (body.image) update.image = body.image;
+    return this.rooms.update(roomId, update);
+  }
+
+  @Post(':id/leave')
+  async leave(@Param('id') roomId: string, @Req() req: any) {
+    const isMember = await this.rooms.isMember(roomId, req.user.sub);
+    if (!isMember) throw new BadRequestException('Not a member of this room');
+    await this.rooms.removeMember(roomId, req.user.sub);
+    return { success: true };
+  }
+
+  @Delete(':id/messages')
+  async clearMessages(@Param('id') roomId: string, @Req() req: any) {
+    const isMember = await this.rooms.isMember(roomId, req.user.sub);
+    if (!isMember) throw new ForbiddenException('Not a member of this room');
+    await this.messages.deleteByRoom(roomId);
+    return { success: true };
   }
 
   @Post(':id/read')

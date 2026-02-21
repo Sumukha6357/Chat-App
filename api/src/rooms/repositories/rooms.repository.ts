@@ -3,7 +3,7 @@ import { Model, Types } from 'mongoose';
 import { Room, RoomDocument } from '../schemas/room.schema';
 
 export class RoomsRepository {
-  constructor(@InjectModel(Room.name) private readonly roomModel: Model<RoomDocument>) {}
+  constructor(@InjectModel(Room.name) private readonly roomModel: Model<RoomDocument>) { }
 
   create(data: Partial<Room>) {
     return this.roomModel.create(data);
@@ -40,5 +40,9 @@ export class RoomsRepository {
       ids.unshift(new Types.ObjectId(userId));
     }
     return this.roomModel.updateOne({ _id: roomId }, { $pull: { members: { $in: ids } } });
+  }
+
+  update(id: string, data: Partial<Room>) {
+    return this.roomModel.findByIdAndUpdate(id, data, { new: true }).lean();
   }
 }

@@ -13,7 +13,7 @@ export class RoomsService {
     @Inject(forwardRef(() => MessagesService))
     private readonly messages: MessagesService,
     @InjectModel(RoomMember.name) private readonly roomMemberModel: Model<RoomMemberDocument>,
-  ) {}
+  ) { }
 
   createRoom(data: Partial<Room>) {
     return this.roomsRepo.create(data);
@@ -70,5 +70,9 @@ export class RoomsService {
 
   removeMember(roomId: string, userId: string) {
     return this.roomsRepo.removeMember(roomId, userId);
+  }
+
+  update(id: string, data: Partial<Room>) {
+    return this.roomsRepo.update(id, data);
   }
 }

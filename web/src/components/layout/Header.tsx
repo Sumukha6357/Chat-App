@@ -9,15 +9,21 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { apiRequest, blockUser, unblockUser } from '@/services/api';
 import { RoomSettings } from './RoomSettings';
-import { HiArrowPath, HiNoSymbol, HiExclamationTriangle, HiChevronLeft, HiCog6Tooth } from 'react-icons/hi2';
+import {
+  HiArrowPath, HiNoSymbol, HiExclamationTriangle, HiChevronLeft, HiCog6Tooth,
+  HiEllipsisVertical, HiMagnifyingGlass, HiPhone, HiVideoCamera, HiTrash,
+  HiArrowRightOnRectangle, HiInformationCircle
+} from 'react-icons/hi2';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  onSearchToggle: () => void;
+  searchOpen: boolean;
 }
 
-export function Header({ title, subtitle, onBack }: HeaderProps) {
+export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: HeaderProps) {
   const router = useRouter();
   const roomId = router.query.id as string | undefined;
   const roomPresence = useChatStore((s) => s.roomPresence);
@@ -26,6 +32,10 @@ export function Header({ title, subtitle, onBack }: HeaderProps) {
   const me = useAuthStore((s) => s.userId);
   const failedMessages = useChatStore((s) => (roomId ? s.getFailedMessages(roomId) : []));
   const retryAllFailed = useChatStore((s) => s.retryAllFailed);
+  const setMessages = useChatStore((s) => (roomId: string, msgs: any[]) => {
+    // Note: I might need a more direct way to clear messages in the store if mergeServerMessages isn't enough
+    // For now I'll assume we can use a store action to clear
+  });
   const presence = roomId ? roomPresence[roomId] : undefined;
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -33,6 +43,8 @@ export function Header({ title, subtitle, onBack }: HeaderProps) {
   const [isBlocked, setIsBlocked] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
   const [roomSettingsOpen, setRoomSettingsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const cooldownRef = useRef(0);
   const showToast = useToastStore((s) => s.show);
   const activeRoomRef = useRef<string | undefined>(roomId);
@@ -51,6 +63,16 @@ export function Header({ title, subtitle, onBack }: HeaderProps) {
       setIsBlocked(blocked);
     }).catch(() => setIsBlocked(false));
   }, [isDirect, otherUserId]);
+
+  // Handle outside click for menu
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   const onRefresh = () => {
     if (!roomId) return;
@@ -86,6 +108,32 @@ export function Header({ title, subtitle, onBack }: HeaderProps) {
       showToast(e?.message || 'Action failed', 'error');
     } finally {
       setIsBlocking(false);
+    }
+  };
+
+  const onClearChat = async () => {
+    if (!roomId) return;
+    if (!confirm('Are you sure you want to clear all messages in this chat? This cannot be undone.')) return;
+    try {
+      await apiRequest(`/rooms/${roomId}/messages`, { method: 'DELETE', auth: true });
+      useChatStore.getState().mergeServerMessages(roomId, [], 'replace');
+      showToast('Chat cleared', 'success');
+      setMenuOpen(false);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to clear chat', 'error');
+    }
+  };
+
+  const onExitRoom = async () => {
+    if (!roomId) return;
+    const msg = isDirect ? 'Are you sure you want to close this chat?' : 'Are you sure you want to leave this group?';
+    if (!confirm(msg)) return;
+    try {
+      await apiRequest(`/rooms/${roomId}/leave`, { method: 'POST', auth: true });
+      showToast('Exited room', 'success');
+      router.push('/');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to exit', 'error');
     }
   };
 
@@ -148,7 +196,32 @@ export function Header({ title, subtitle, onBack }: HeaderProps) {
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Call buttons (enabled only for direct) */}
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!isDirect}
+            className="rounded-full w-9 h-9 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] disabled:opacity-30"
+            title="Voice Call"
+            onClick={() => showToast('Calling feature coming soon...', 'info')}
+          >
+            <HiPhone className="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!isDirect}
+            className="rounded-full w-9 h-9 p-0 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] disabled:opacity-30"
+            title="Video Call"
+            onClick={() => showToast('Video call feature coming soon...', 'info')}
+          >
+            <HiVideoCamera className="w-4 h-4" />
+          </Button>
+
+          <div className="w-px h-6 bg-[var(--color-border)] mx-1" />
+
           {failedMessages.length > 0 && (
             <Button
               variant="destructive"
@@ -162,44 +235,83 @@ export function Header({ title, subtitle, onBack }: HeaderProps) {
             </Button>
           )}
 
-          {/* Settings button */}
           <Button
-            variant="secondary"
+            variant={searchOpen ? "primary" : "ghost"}
             size="sm"
-            onClick={() => setRoomSettingsOpen(true)}
-            className="rounded-full w-9 h-9 p-0"
-            title="Room settings"
+            onClick={onSearchToggle}
+            className={`rounded-full w-9 h-9 p-0 ${!searchOpen ? 'text-[var(--color-text-muted)]' : ''}`}
+            title="Search"
           >
-            <HiCog6Tooth className="w-4 h-4" />
+            <HiMagnifyingGlass className="w-4 h-4" />
           </Button>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className={`rounded-full w-9 h-9 p-0 ${isRefreshing ? 'animate-spin' : ''}`}
-            title="Refresh presence"
-          >
-            <HiArrowPath className="w-4 h-4" />
-          </Button>
-
-          {isDirect && (
+          {/* 3-dots Menu */}
+          <div className="relative" ref={menuRef}>
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
-              onClick={onToggleBlock}
-              disabled={isBlocking}
-              className={`rounded-full w-9 h-9 p-0 ${isBlocked ? 'text-[var(--color-danger)] border-[var(--color-danger)]/20' : ''}`}
-              title={isBlocked ? 'Unblock user' : 'Block user'}
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="rounded-full w-9 h-9 p-0 text-[var(--color-text-muted)]"
+              title="More options"
             >
-              <HiNoSymbol className="w-4 h-4" />
+              <HiEllipsisVertical className="w-5 h-5" />
             </Button>
-          )}
+
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 z-50">
+                <div className="py-1">
+                  <button
+                    onClick={() => { setRoomSettingsOpen(true); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                  >
+                    <HiInformationCircle className="w-4 h-4 text-[var(--color-primary)]" />
+                    <span>Room Info</span>
+                  </button>
+
+                  <button
+                    onClick={onRefresh}
+                    disabled={isRefreshing}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                  >
+                    <HiArrowPath className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <span>Refresh Presence</span>
+                  </button>
+
+                  {isDirect && (
+                    <button
+                      onClick={onToggleBlock}
+                      disabled={isBlocking}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                    >
+                      <HiNoSymbol className={`w-4 h-4 ${isBlocked ? 'text-[var(--color-danger)]' : ''}`} />
+                      <span>{isBlocked ? 'Unblock User' : 'Block User'}</span>
+                    </button>
+                  )}
+
+                  <div className="h-px bg-[var(--color-border)] my-1" />
+
+                  <button
+                    onClick={onClearChat}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-colors"
+                  >
+                    <HiTrash className="w-4 h-4" />
+                    <span>Clear Chat</span>
+                  </button>
+
+                  <button
+                    onClick={onExitRoom}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-colors"
+                  >
+                    <HiArrowRightOnRectangle className="w-4 h-4" />
+                    <span>{isDirect ? 'Close Chat' : 'Exit Group'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Room settings slide-in */}
       {roomSettingsOpen && currentRoom && (
         <RoomSettings
           room={currentRoom}

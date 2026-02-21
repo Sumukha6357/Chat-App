@@ -75,12 +75,14 @@ export function Sidebar() {
     const status = isDirect ? userPresence[otherUserId]?.status : undefined;
     const onlineInRoom = roomPresence[room._id]?.onlineCount ?? 0;
 
+    const slug = room.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
     return (
-      <Link
+      <button
         key={room._id}
-        href={`/rooms/${room._id}`}
+        onClick={() => router.push(`/rooms/${room._id}`, `/rooms/${slug}`, { shallow: false })}
         className={`
-          group flex items-center gap-3 px-3 py-2 mx-2 my-0.5 rounded-[var(--radius-md)] transition-all duration-200
+          w-full group flex items-center gap-3 px-3 py-2 mx-2 my-0.5 rounded-[var(--radius-md)] transition-all duration-200 text-left
           ${isActive
             ? 'bg-[var(--color-primary)] text-white shadow-md translate-x-1'
             : 'text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] hover:translate-x-1'
@@ -109,7 +111,7 @@ export function Sidebar() {
             {room.type}
           </div>
         </div>
-      </Link>
+      </button>
     );
   };
 
