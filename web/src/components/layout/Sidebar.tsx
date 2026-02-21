@@ -7,10 +7,11 @@ import { Button } from '../ui/Button';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { searchRooms } from '@/services/api';
+import { ProfileCard } from './ProfileCard';
 import {
-  HiHashtag, HiUserGroup, HiChatBubbleLeftRight, HiPlus,
-  HiMagnifyingGlass, HiChevronDown, HiChevronRight,
-  HiSun, HiMoon, HiArrowRightOnRectangle,
+  HiHashtag, HiUserGroup, HiChatBubbleLeftRight,
+  HiPlus, HiMagnifyingGlass, HiChevronDown, HiChevronRight,
+  HiSun, HiMoon, HiSquares2X2,
 } from 'react-icons/hi2';
 
 export function Sidebar() {
@@ -22,7 +23,6 @@ export function Sidebar() {
   const userPresence = useChatStore((s) => s.userPresence);
   const me = useAuthStore((s) => s.userId);
   const username = useAuthStore((s) => s.username);
-  const clear = useAuthStore((s) => s.clear);
   const { theme, toggleTheme } = useThemeStore();
 
   const [query, setQuery] = useState('');
@@ -30,19 +30,29 @@ export function Sidebar() {
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [appMenuOpen, setAppMenuOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const appMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close profile dropdown on outside click
+  // Close profile on outside click
   useEffect(() => {
     if (!profileOpen) return;
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false);
-      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [profileOpen]);
+
+  // Close app menu on outside click
+  useEffect(() => {
+    if (!appMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (appMenuRef.current && !appMenuRef.current.contains(e.target as Node)) setAppMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [appMenuOpen]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -105,21 +115,65 @@ export function Sidebar() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-surface)]">
-      {/* Header */}
-      <div className="p-5 flex items-center justify-between pb-4">
-        <h2 className="text-2xl font-bold tracking-tighter text-[var(--color-text)] flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white shadow-lg">P</div>
-          Pulse
-        </h2>
-        <Link href="/rooms/new">
-          <Button variant="ghost" size="sm" className="rounded-full w-9 h-9 p-0 hover:bg-[var(--color-surface-2)]">
-            <HiPlus className="w-6 h-6" />
-          </Button>
-        </Link>
+      {/* Header with clickable app logo */}
+      <div className="p-4 flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
+        <div className="relative" ref={appMenuRef}>
+          <button
+            onClick={() => setAppMenuOpen((v) => !v)}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity group"
+            title="Workspace menu"
+          >
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-black shadow-lg group-hover:shadow-[var(--color-primary)]/30 transition-shadow">
+              P
+            </div>
+            <span className="text-xl font-black tracking-tighter text-[var(--color-text)]">Pulse</span>
+          </button>
+
+          {/* App / Workspace menu */}
+          {appMenuOpen && (
+            <div className="absolute top-full left-0 mt-2 w-56 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 z-50">
+              <div className="px-4 py-3 border-b border-[var(--color-border)]">
+                <p className="text-xs font-black text-[var(--color-text)]">Pulse Workspace</p>
+                <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">Real-time chat platform</p>
+              </div>
+              <div className="py-1">
+                <Link href="/rooms/new" onClick={() => setAppMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                  <HiPlus className="w-4 h-4 text-[var(--color-primary)]" />
+                  New Room
+                </Link>
+                <button
+                  onClick={() => { toggleTheme(); setAppMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors">
+                  {theme === 'dark' ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" /> : <HiMoon className="w-4 h-4 text-[var(--color-primary)]" />}
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          {/* Theme quick toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            title="Toggle theme"
+          >
+            {theme === 'dark' ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" /> : <HiMoon className="w-4 h-4" />}
+          </button>
+
+          {/* New room */}
+          <Link href="/rooms/new" title="New room">
+            <button className="p-2 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">
+              <HiPlus className="w-5 h-5" />
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
-      <div className="px-4 mb-4">
+      <div className="px-4 mt-3 mb-3">
         <div className="relative group">
           <HiMagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-primary)] transition-colors pointer-events-none" />
           <input
@@ -132,7 +186,7 @@ export function Sidebar() {
       </div>
 
       {/* Room list */}
-      <div className="flex-1 overflow-y-auto pb-6 scrollbar-hide space-y-1">
+      <div className="flex-1 overflow-y-auto pb-4 scrollbar-hide space-y-1">
         {groupRooms.length > 0 && (
           <section>
             <button
@@ -140,8 +194,8 @@ export function Sidebar() {
               className="w-full flex items-center gap-2 px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
             >
               {channelsOpen ? <HiChevronDown className="w-3 h-3" /> : <HiChevronRight className="w-3 h-3" />}
+              <HiHashtag className="w-3 h-3" />
               <span>Channels</span>
-              <div className="flex-1 h-px bg-[var(--color-border)] ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
             <div className={`overflow-hidden transition-all duration-300 ${channelsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
               {groupRooms.map(renderRoomItem)}
@@ -156,8 +210,8 @@ export function Sidebar() {
               className="w-full flex items-center gap-2 px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
             >
               {dmsOpen ? <HiChevronDown className="w-3 h-3" /> : <HiChevronRight className="w-3 h-3" />}
+              <HiChatBubbleLeftRight className="w-3 h-3" />
               <span>Direct Messages</span>
-              <div className="flex-1 h-px bg-[var(--color-border)] ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
             <div className={`overflow-hidden transition-all duration-300 ${dmsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
               {directMessages.map(renderRoomItem)}
@@ -166,7 +220,7 @@ export function Sidebar() {
         )}
 
         {displayList.length === 0 && (
-          <div className="px-6 py-12 text-center animate-in fade-in duration-500">
+          <div className="px-6 py-12 text-center">
             <div className="w-16 h-16 bg-[var(--color-surface-2)] rounded-full flex items-center justify-center mx-auto mb-4">
               <HiUserGroup className="w-8 h-8 text-[var(--color-text-muted)]" />
             </div>
@@ -176,31 +230,10 @@ export function Sidebar() {
       </div>
 
       {/* Profile section */}
-      <div className="p-3 bg-[var(--color-bg)] border-t border-[var(--color-border)] relative" ref={profileRef}>
-        {/* Profile dropdown */}
+      <div className="p-3 bg-[var(--color-surface)] border-t border-[var(--color-border)] relative" ref={profileRef}>
         {profileOpen && (
-          <div className="absolute bottom-full left-3 right-3 mb-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-[var(--shadow-premium)] overflow-hidden animate-in slide-in-from-bottom-2 duration-200 z-50">
-            <div className="p-3 border-b border-[var(--color-border)]">
-              <p className="text-xs font-bold text-[var(--color-text)] truncate">{username || 'Me'}</p>
-              <p className="text-[10px] text-[var(--color-text-muted)]">Online</p>
-            </div>
-            <button
-              onClick={() => { toggleTheme(); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
-            >
-              {theme === 'dark' ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" /> : <HiMoon className="w-4 h-4 text-[var(--color-primary)]" />}
-              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            </button>
-            <button
-              onClick={() => { clear(); router.replace('/'); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-danger)] hover:bg-[var(--color-danger)]/5 transition-colors"
-            >
-              <HiArrowRightOnRectangle className="w-4 h-4" />
-              Sign out
-            </button>
-          </div>
+          <ProfileCard onClose={() => setProfileOpen(false)} />
         )}
-
         <button
           onClick={() => setProfileOpen((v) => !v)}
           className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-[var(--color-surface-hover)] transition-colors group cursor-pointer"
@@ -208,18 +241,9 @@ export function Sidebar() {
           <Avatar name={username || 'Me'} size={36} status="online" className="ring-2 ring-[var(--color-primary)]/20 shadow-sm shrink-0" />
           <div className="flex-1 min-w-0 text-left">
             <div className="text-sm font-bold truncate text-[var(--color-text)] leading-tight">{username || 'Current User'}</div>
-            <div className="text-[10px] text-[var(--color-text-muted)] font-medium">Online</div>
+            <div className="text-[10px] text-[var(--color-success)] font-semibold">● Online</div>
           </div>
-          {/* Theme quick-toggle icon */}
-          <button
-            onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-            className="p-1.5 rounded-lg hover:bg-[var(--color-surface-2)] transition-colors opacity-0 group-hover:opacity-100"
-            title="Toggle theme"
-          >
-            {theme === 'dark'
-              ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" />
-              : <HiMoon className="w-4 h-4 text-[var(--color-text-muted)]" />}
-          </button>
+          <HiSquares2X2 className="w-4 h-4 text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </button>
       </div>
     </div>
