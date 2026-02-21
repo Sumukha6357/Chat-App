@@ -8,7 +8,6 @@ import { Footer } from '@/components/layout/Footer';
 import { MessageList } from '@/components/chat/MessageList';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
-import { NotificationPanel } from '@/components/notifications/NotificationPanel';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { apiRequest, markRoomRead, fetchRoomReadState, fetchUsersPresence, searchRoomMessages } from '@/services/api';
@@ -22,6 +21,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { fetchNotifications } from '@/services/notifications';
+import { HiMagnifyingGlass, HiXMark } from 'react-icons/hi2';
 
 export default function RoomPage() {
   const router = useRouter();
@@ -50,6 +50,21 @@ export default function RoomPage() {
   const [roomName, setRoomName] = useState('');
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLDivElement | null>(null);
+
+  // Close search on outside click
+  useEffect(() => {
+    if (!searchOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+        setSearchTerm('');
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [searchOpen]);
   const lastMarkRef = useRef(0);
 
   useEffect(() => {
@@ -278,10 +293,7 @@ export default function RoomPage() {
   const currentRoom = rooms.find((r) => r._id === roomId);
 
   return (
-    <AppShell
-      sidebar={<Sidebar />}
-      rightPanel={<NotificationPanel />}
-    >
+    <AppShell sidebar={<Sidebar />}>
       <div className="flex flex-col h-full min-w-0">
         <Header title={currentRoom?.name || 'Room'} subtitle={currentRoom?.type} />
 
@@ -293,40 +305,42 @@ export default function RoomPage() {
           )}
 
           <div className="max-w-4xl mx-auto w-full">
-            <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 sticky top-0 z-10 flex items-center justify-between">
-              <button
-                className="text-xs font-semibold text-[var(--color-primary)] hover:underline"
-                onClick={() => setSearchOpen((v) => !v)}
-              >
-                {searchOpen ? 'Close search' : 'Search in this chat'}
-              </button>
+            <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 sticky top-0 z-10 flex items-center justify-between gap-3" ref={searchRef}>
+              {/* Inline search bar — expands on focus */}
+              <div className="flex-1 relative group">
+                <HiMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)] pointer-events-none" />
+                <input
+                  className="w-full bg-transparent border border-transparent focus:bg-[var(--color-surface)] focus:border-[var(--color-primary)]/30 rounded-full pl-8 pr-8 py-1 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]/60 outline-none transition-all duration-200"
+                  placeholder="Search in this chat..."
+                  value={searchTerm}
+                  onFocus={() => setSearchOpen(true)}
+                  onChange={(e) => { setSearchTerm(e.target.value); setSearchOpen(true); }}
+                  onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => { setSearchTerm(''); setSearchResults([]); setSearchOpen(false); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] transition-colors"
+                  >
+                    <HiXMark className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
 
               {cursor && (
-                <Button variant="ghost" size="sm" onClick={loadMore}>Load earlier messages</Button>
+                <Button variant="ghost" size="sm" onClick={loadMore} className="whitespace-nowrap text-xs">Load earlier</Button>
               )}
             </div>
 
-            {searchOpen && (
-              <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-md sticky top-[37px] z-10 shadow-lg animate-in fade-in slide-in-from-top-4 duration-300 rounded-b-2xl mx-4">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Search messages..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                      className="!bg-[var(--color-bg)]"
-                    />
-                  </div>
-                  <Button variant="primary" size="md" onClick={onSearch} className="px-6">Search</Button>
-                </div>
-                {searchResults.length > 0 && (
-                  <div className="mt-4 max-h-60 overflow-y-auto p-2 bg-[var(--color-bg)] rounded-xl border border-[var(--color-border)] shadow-inner space-y-1">
+            {searchOpen && searchTerm && (
+              <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-md sticky top-[37px] z-10 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 mx-4 rounded-b-2xl overflow-hidden">
+                {searchResults.length > 0 ? (
+                  <div className="max-h-60 overflow-y-auto p-2 space-y-1">
                     {searchResults.map((m) => (
                       <button
                         key={m._id}
-                        className="w-full px-4 py-3 text-left text-sm hover:bg-[var(--color-surface)] hover:shadow-sm rounded-lg transition-all border border-transparent hover:border-[var(--color-border)] group"
-                        onClick={() => onSelectResult(m._id)}
+                        className="w-full px-4 py-3 text-left text-sm hover:bg-[var(--color-surface-hover)] rounded-lg transition-all group"
+                        onClick={() => { onSelectResult(m._id); setSearchOpen(false); }}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold text-[var(--color-text)] text-xs">User {m.senderId.slice(0, 6)}</span>
@@ -336,12 +350,11 @@ export default function RoomPage() {
                       </button>
                     ))}
                   </div>
-                )}
-                {searchTerm && searchResults.length === 0 && !loading && (
-                  <div className="mt-4 py-8 text-center bg-[var(--color-bg)] rounded-xl border border-dashed border-[var(--color-border)]">
-                    <p className="text-sm text-[var(--color-text-muted)] font-medium">No messages found matching "{searchTerm}"</p>
+                ) : !loading ? (
+                  <div className="py-6 text-center">
+                    <p className="text-xs text-[var(--color-text-muted)] font-medium">No messages found for &ldquo;{searchTerm}&rdquo; — press Enter to search</p>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
 
