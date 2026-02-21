@@ -94,7 +94,11 @@ export class RoomsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') roomId: string, @Req() req: any, @Body() body: any) {
+  async update(@Param('id') roomSlug: string, @Req() req: any, @Body() body: any) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a member of this room');
     // Simplified: only allow certain fields to be updated
@@ -109,7 +113,11 @@ export class RoomsController {
   }
 
   @Post(':id/leave')
-  async leave(@Param('id') roomId: string, @Req() req: any) {
+  async leave(@Param('id') roomSlug: string, @Req() req: any) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new BadRequestException('Not a member of this room');
     await this.rooms.removeMember(roomId, req.user.sub);
@@ -117,7 +125,11 @@ export class RoomsController {
   }
 
   @Delete(':id/messages')
-  async clearMessages(@Param('id') roomId: string, @Req() req: any) {
+  async clearMessages(@Param('id') roomSlug: string, @Req() req: any) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a member of this room');
     await this.messages.deleteByRoom(roomId);
@@ -126,13 +138,14 @@ export class RoomsController {
 
   @Post(':id/read')
   async markRead(
-    @Param('id') roomId: string,
+    @Param('id') roomSlug: string,
     @Req() req: any,
     @Body() body: { lastReadMessageId?: string; lastReadAt?: string },
   ) {
-    if (!Types.ObjectId.isValid(roomId)) {
-      throw new BadRequestException('Invalid room id');
-    }
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     if (body.lastReadMessageId && !Types.ObjectId.isValid(body.lastReadMessageId)) {
       throw new BadRequestException('Invalid lastReadMessageId');
     }
@@ -150,7 +163,11 @@ export class RoomsController {
   }
 
   @Get(':id/read-state')
-  async readState(@Param('id') roomId: string, @Req() req: any) {
+  async readState(@Param('id') roomSlug: string, @Req() req: any) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) {
       return { members: [] };

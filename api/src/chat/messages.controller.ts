@@ -1,4 +1,4 @@
-import { Controller, ForbiddenException, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, ForbiddenException, Get, NotFoundException, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RoomsService } from '../rooms/rooms.service';
 import { MessagesService } from './messages.service';
@@ -15,7 +15,11 @@ export class MessagesController {
   ) { }
 
   @Get()
-  async list(@Param('roomId') roomId: string, @Query() query: MessageQueryDto, @Req() req: any) {
+  async list(@Param('roomId') roomSlug: string, @Query() query: MessageQueryDto, @Req() req: any) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) {
       throw new ForbiddenException('Not a room member');
@@ -34,11 +38,15 @@ export class MessagesController {
 
   @Get('search')
   async search(
-    @Param('roomId') roomId: string,
+    @Param('roomId') roomSlug: string,
     @Query('q') q: string,
     @Query() query: MessageQueryDto,
     @Req() req: any,
   ) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) {
       throw new ForbiddenException('Not a room member');

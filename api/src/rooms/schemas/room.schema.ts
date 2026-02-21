@@ -13,6 +13,9 @@ export class Room {
   @Prop({ required: true, index: true })
   nameLower!: string;
 
+  @Prop({ required: true, unique: true, index: true })
+  slug!: string;
+
   @Prop({ required: true, enum: ['direct', 'group'], index: true })
   type!: 'direct' | 'group';
 

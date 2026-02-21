@@ -13,6 +13,13 @@ export class RoomsRepository {
     return this.roomModel.findById(id).lean();
   }
 
+  findByIdOrSlug(idOrSlug: string) {
+    if (Types.ObjectId.isValid(idOrSlug)) {
+      return this.roomModel.findById(idOrSlug).lean();
+    }
+    return this.roomModel.findOne({ slug: idOrSlug }).lean();
+  }
+
   findByMember(userId: string) {
     const ids: Array<string | Types.ObjectId> = [userId];
     if (Types.ObjectId.isValid(userId)) {
@@ -44,5 +51,9 @@ export class RoomsRepository {
 
   update(id: string, data: Partial<Room>) {
     return this.roomModel.findByIdAndUpdate(id, data, { new: true }).lean();
+  }
+
+  findAll() {
+    return this.roomModel.find({}).lean();
   }
 }

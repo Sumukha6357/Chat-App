@@ -25,9 +25,14 @@ import { HiMagnifyingGlass, HiXMark } from 'react-icons/hi2';
 
 export default function RoomPage() {
   const router = useRouter();
-  const roomId = router.query.id as string | undefined;
+  const slugOrId = router.query.id as string | undefined;
   const auth = useAuthStore();
   const rooms = useChatStore((s) => s.rooms);
+
+  // Resolve internal room ID from slug or direct ID
+  const currentRoom = rooms.find((r) => r._id === slugOrId || r.slug === slugOrId);
+  const roomId = currentRoom?._id || (slugOrId && slugOrId.length === 24 ? slugOrId : undefined);
+
   const messages = useChatStore((s) => (roomId ? s.messages[roomId] || [] : []));
   const typingUsers = useChatStore((s) => (roomId ? s.typingUsers[roomId] || [] : []));
   const setRooms = useChatStore((s) => s.setRooms);
@@ -113,9 +118,9 @@ export default function RoomPage() {
         }
       })
       .finally(() => setLoading(false));
-    const current = rooms.find((r) => r._id === roomId);
-    if (current?.type === 'direct' && Array.isArray(current.members)) {
-      const otherIds = current.members.filter((id: string) => id !== auth.userId);
+
+    if (currentRoom?.type === 'direct' && Array.isArray(currentRoom.members)) {
+      const otherIds = currentRoom.members.filter((id: string) => id !== auth.userId);
       if (otherIds.length > 0) {
         fetchUsersPresence(otherIds).then((presence) => {
           const map: Record<string, { status: 'online' | 'offline' | 'away'; lastSeenAt?: number }> = {};
@@ -290,7 +295,7 @@ export default function RoomPage() {
     );
   }
 
-  const currentRoom = rooms.find((r) => r._id === roomId);
+
 
   return (
     <AppShell sidebar={<Sidebar />}>

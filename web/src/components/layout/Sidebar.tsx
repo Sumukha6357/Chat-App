@@ -75,7 +75,7 @@ export function Sidebar() {
     const status = isDirect ? userPresence[otherUserId]?.status : undefined;
     const onlineInRoom = roomPresence[room._id]?.onlineCount ?? 0;
 
-    const slug = room.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = room.slug || room.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
     return (
       <button

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { RoomsRepository } from './repositories/rooms.repository';
@@ -7,7 +7,7 @@ import { RoomMember, RoomMemberDocument } from './schemas/room-member.schema';
 import { MessagesService } from '../chat/messages.service';
 
 @Injectable()
-export class RoomsService {
+export class RoomsService implements OnModuleInit {
   constructor(
     private readonly roomsRepo: RoomsRepository,
     @Inject(forwardRef(() => MessagesService))
@@ -15,12 +15,43 @@ export class RoomsService {
     @InjectModel(RoomMember.name) private readonly roomMemberModel: Model<RoomMemberDocument>,
   ) { }
 
-  createRoom(data: Partial<Room>) {
+  async onModuleInit() {
+    // Migration: populate slugs for existing rooms
+    const allRooms = await this.roomsRepo.findAll();
+    for (const room of allRooms as any[]) {
+      if (!room.slug) {
+        const baseSlug = (room.name || 'room').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        let slug = baseSlug || 'room';
+        let count = 0;
+        let finalSlug = slug;
+        while (await this.roomsRepo.findByIdOrSlug(count > 0 ? `${slug}-${count}` : slug)) {
+          count++;
+          finalSlug = `${slug}-${count}`;
+        }
+        await this.roomsRepo.update(room._id.toString(), { slug: finalSlug });
+      }
+    }
+  }
+
+  async createRoom(data: Partial<Room>) {
+    if (data.name && !data.slug) {
+      const baseSlug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      let slug = baseSlug || 'room';
+      let count = 0;
+      while (await this.roomsRepo.findByIdOrSlug(count > 0 ? `${slug}-${count}` : slug)) {
+        count++;
+      }
+      data.slug = count > 0 ? `${slug}-${count}` : slug;
+    }
     return this.roomsRepo.create(data);
   }
 
   findById(id: string) {
     return this.roomsRepo.findById(id);
+  }
+
+  findByIdOrSlug(idOrSlug: string) {
+    return this.roomsRepo.findByIdOrSlug(idOrSlug);
   }
 
   findByMember(userId: string) {

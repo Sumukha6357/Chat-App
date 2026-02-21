@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface Room {
   _id: string;
   name: string;
+  slug?: string;
   type: 'direct' | 'group';
   members: string[];
   unreadCount?: number;
