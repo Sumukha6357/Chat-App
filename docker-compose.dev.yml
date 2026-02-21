@@ -18,7 +18,7 @@ services:
       - ./api/src:/app/src
       - ./api/uploads:/app/uploads
     ports:
-      - "3001:3000"
+      - "5071:3000"
 
   web:
     build:
@@ -33,4 +33,4 @@ services:
     volumes:
       - ./web/src:/app/src
     ports:
-      - "5071:3000"
+      - "3071:3000"
