@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Environment files (keep examples, ignore actuals)
+.env
+.env.local
+.env.dev
+.env.prod
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+logs/
+debug_guard.log
+test-error.txt
+errors.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Uploads (user-generated content)
+api/uploads/*
+!api/uploads/.gitkeep
+
+# TypeScript build info
+*.tsbuildinfo
