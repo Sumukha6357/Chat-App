@@ -25,6 +25,11 @@ export interface Message {
     size: number;
     mimeType: string;
   }>;
+  editedAt?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  parentId?: string;
+  reactions?: Array<{ emoji: string; count: number; userIds: string[] }>;
 }
 
 export interface OutboundQueueItem {

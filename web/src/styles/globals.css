@@ -68,6 +68,53 @@
   --glass-border: rgba(255, 255, 255, 0.05);
 }
 
+[data-theme="midnight"] {
+  --color-primary: #22d3ee;
+  --color-primary-hover: #06b6d4;
+  --color-success: #34d399;
+  --color-danger: #fb7185;
+  --color-warning: #f59e0b;
+
+  --color-bg: #020617;
+  --color-surface: #0b1220;
+  --color-surface-2: #111c33;
+  --color-surface-3: #1a2b49;
+  --color-surface-hover: #15223b;
+  --color-surface-active: #1e3458;
+  --color-border: #1f2f4b;
+
+  --color-text: #e2e8f0;
+  --color-text-muted: #93a6c6;
+  --color-text-on-primary: #001018;
+
+  --glass-bg: rgba(11, 18, 32, 0.78);
+  --glass-border: rgba(34, 211, 238, 0.15);
+}
+
+[data-density="compact"] {
+  --density-scale: 0.9;
+}
+
+[data-density="comfortable"] {
+  --density-scale: 1;
+}
+
+[data-density="cozy"] {
+  --density-scale: 1.12;
+}
+
+[data-font-size="sm"] {
+  --font-size-scale: 0.93;
+}
+
+[data-font-size="md"] {
+  --font-size-scale: 1;
+}
+
+[data-font-size="lg"] {
+  --font-size-scale: 1.08;
+}
+
 /* ── Global smooth theme transitions ─────────────────────── */
 *,
 *::before,
@@ -200,6 +247,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.3s ease, color 0.3s ease;
+  font-size: calc(16px * var(--font-size-scale, 1));
 }
 
 .scrollbar-hide::-webkit-scrollbar {

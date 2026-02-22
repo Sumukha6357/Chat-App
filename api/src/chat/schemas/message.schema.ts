@@ -39,6 +39,12 @@ export class Message {
   @Prop()
   deletedAt?: Date;
 
+  @Prop({ type: Types.ObjectId, ref: 'Message', index: true })
+  parentId?: Types.ObjectId;
+
+  @Prop()
+  editedAt?: Date;
+
   @Prop({
     type: [
       {
@@ -62,6 +68,7 @@ export class Message {
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
 MessageSchema.index({ roomId: 1, createdAt: -1 });
+MessageSchema.index({ roomId: 1, parentId: 1, createdAt: 1 });
 MessageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 MessageSchema.index(
   { roomId: 1, senderId: 1, clientMessageId: 1 },

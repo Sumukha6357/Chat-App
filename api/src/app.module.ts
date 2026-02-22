@@ -9,6 +9,7 @@ import { ChatModule } from './chat/chat.module';
 import { PresenceModule } from './presence/presence.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { GatewayModule } from './gateway/gateway.module';
+import { PreferencesModule } from './preferences/preferences.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { GatewayModule } from './gateway/gateway.module';
     PresenceModule,
     NotificationsModule,
     GatewayModule,
+    PreferencesModule,
   ],
 })
 export class AppModule {}

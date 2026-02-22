@@ -19,7 +19,15 @@ export class MessagesService {
       throw new BadRequestException('Message content too large');
     }
     const content = raw ? sanitizeContent(raw) : '';
-    return this.messagesRepo.create({ ...data, content, attachments });
+    const created = await this.messagesRepo.create({ ...data, content, attachments });
+    const senderId = (data.senderId as any)?.toString?.() || '';
+    const roomId = (data.roomId as any)?.toString?.() || '';
+    const messageId = (created as any)?._id?.toString?.() || '';
+    if (messageId && senderId && roomId) {
+      const mentions = extractMentions(content);
+      await this.messagesRepo.saveMentions(messageId, roomId, senderId, mentions);
+    }
+    return created;
   }
 
   findByClientMessageId(roomId: string, senderId: string, clientMessageId: string) {
@@ -55,6 +63,62 @@ export class MessagesService {
   deleteByRoom(roomId: string) {
     return this.messagesRepo.deleteByRoom(roomId);
   }
+
+  async editMessage(messageId: string, userId: string, content: string) {
+    const existing = await this.messagesRepo.findById(messageId);
+    if (!existing) {
+      throw new BadRequestException('Message not found');
+    }
+    if ((existing as any).senderId?.toString?.() !== userId) {
+      throw new BadRequestException('Cannot edit this message');
+    }
+    const nextContent = sanitizeContent((content || '').trim());
+    if (!nextContent) {
+      throw new BadRequestException('Message is empty');
+    }
+    await this.messagesRepo.appendEdit(
+      messageId,
+      userId,
+      (existing as any).content || '',
+      nextContent,
+    );
+    return this.messagesRepo.updateMessage(messageId, {
+      content: nextContent,
+      editedAt: new Date(),
+    });
+  }
+
+  async softDeleteMessage(messageId: string, userId: string) {
+    const existing = await this.messagesRepo.findById(messageId);
+    if (!existing) {
+      throw new BadRequestException('Message not found');
+    }
+    if ((existing as any).senderId?.toString?.() !== userId) {
+      throw new BadRequestException('Cannot delete this message');
+    }
+    return this.messagesRepo.updateMessage(messageId, {
+      isDeleted: true,
+      deletedAt: new Date(),
+      content: '',
+      attachments: [],
+    } as any);
+  }
+
+  addReaction(roomId: string, messageId: string, userId: string, emoji: string) {
+    return this.messagesRepo.addReaction(roomId, messageId, userId, emoji);
+  }
+
+  removeReaction(messageId: string, userId: string, emoji: string) {
+    return this.messagesRepo.removeReaction(messageId, userId, emoji);
+  }
+
+  listReactions(messageId: string) {
+    return this.messagesRepo.listReactions(messageId);
+  }
+
+  getThread(roomId: string, messageId: string, limit = 100) {
+    return this.messagesRepo.findThread(roomId, messageId, limit);
+  }
 }
 
 function sanitizeContent(value: string) {
@@ -68,4 +132,17 @@ function sanitizeContent(value: string) {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractMentions(content: string): Array<{ targetType: 'user' | 'channel'; targetId: string }> {
+  const mentions: Array<{ targetType: 'user' | 'channel'; targetId: string }> = [];
+  const userMatches = content.matchAll(/@([a-zA-Z0-9._-]+)/g);
+  for (const match of userMatches) {
+    if (match[1]) mentions.push({ targetType: 'user', targetId: match[1] });
+  }
+  const channelMatches = content.matchAll(/#([a-zA-Z0-9._-]+)/g);
+  for (const match of channelMatches) {
+    if (match[1]) mentions.push({ targetType: 'channel', targetId: match[1] });
+  }
+  return mentions;
 }

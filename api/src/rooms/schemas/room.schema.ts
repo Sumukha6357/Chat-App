@@ -27,6 +27,15 @@ export class Room {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy!: Types.ObjectId;
+
+  @Prop({ default: '' })
+  topic?: string;
+
+  @Prop({ default: '' })
+  description?: string;
+
+  @Prop()
+  image?: string;
 }
 
 export const RoomSchema = SchemaFactory.createForClass(Room);

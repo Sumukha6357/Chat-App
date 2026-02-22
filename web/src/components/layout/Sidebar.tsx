@@ -3,16 +3,26 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { Avatar } from '../ui/Avatar';
-import { Button } from '../ui/Button';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
-import { searchRooms } from '@/services/api';
+import {
+  addFavorite,
+  getFavorites,
+  getSidebarState,
+  getWorkspaceOrder,
+  patchPreferences,
+  patchSidebarState,
+  removeFavorite,
+  searchRooms,
+  setWorkspaceOrder,
+} from '@/services/api';
 import { ProfileCard } from './ProfileCard';
 import {
   HiHashtag, HiUserGroup, HiChatBubbleLeftRight,
   HiPlus, HiMagnifyingGlass, HiChevronDown, HiChevronRight,
-  HiSun, HiMoon, HiSquares2X2,
+  HiSun, HiMoon, HiSquares2X2, HiStar, HiBars3BottomLeft,
 } from 'react-icons/hi2';
+import { usePreferencesStore } from '@/store/preferencesStore';
 
 export function Sidebar() {
   const router = useRouter();
@@ -24,15 +34,27 @@ export function Sidebar() {
   const me = useAuthStore((s) => s.userId);
   const username = useAuthStore((s) => s.username);
   const { theme, toggleTheme } = useThemeStore();
+  const sidebarCollapsed = usePreferencesStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = usePreferencesStore((s) => s.setSidebarCollapsed);
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[] | null>(null);
   const [channelsOpen, setChannelsOpen] = useState(true);
   const [dmsOpen, setDmsOpen] = useState(true);
+  const [favoritesOpen, setFavoritesOpen] = useState(true);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [workspaceOrder, setLocalWorkspaceOrder] = useState<string[]>([]);
+  const [dragRoomId, setDragRoomId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const appMenuRef = useRef<HTMLDivElement>(null);
+
+  const onToggleTheme = async () => {
+    const next = theme === 'dark' ? 'light' : theme === 'light' ? 'midnight' : 'dark';
+    toggleTheme();
+    await patchPreferences({ theme: next }).catch(() => null);
+  };
 
   // Close profile on outside click
   useEffect(() => {
@@ -63,12 +85,38 @@ export function Sidebar() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const displayList = results ?? rooms;
+  useEffect(() => {
+    getSidebarState()
+      .then((state) => {
+        const collapsed = state?.sectionCollapsed || {};
+        setFavoritesOpen(!collapsed.favorites);
+        setChannelsOpen(!collapsed.textChannels);
+        setDmsOpen(!collapsed.dms);
+      })
+      .catch(() => null);
+    getFavorites()
+      .then((data) => setFavoriteIds(data.roomIds || []))
+      .catch(() => null);
+    getWorkspaceOrder()
+      .then((data) => setLocalWorkspaceOrder(data.workspaceOrder || []))
+      .catch(() => null);
+  }, []);
+
+  const displayListRaw = results ?? rooms;
+  const orderMap = new Map<string, number>(workspaceOrder.map((id, idx) => [id, idx]));
+  const displayList = [...displayListRaw].sort((a, b) => {
+    const aIdx = orderMap.has(a._id) ? (orderMap.get(a._id) as number) : Number.MAX_SAFE_INTEGER;
+    const bIdx = orderMap.has(b._id) ? (orderMap.get(b._id) as number) : Number.MAX_SAFE_INTEGER;
+    if (aIdx !== bIdx) return aIdx - bIdx;
+    return a.name.localeCompare(b.name);
+  });
+  const favoriteRooms = displayList.filter((r) => favoriteIds.includes(r._id));
   const groupRooms = displayList.filter((r) => r.type === 'group');
   const directMessages = displayList.filter((r) => r.type === 'direct');
 
   const renderRoomItem = (room: any) => {
     const isActive = activeRoomId === room._id;
+    const isFavorite = favoriteIds.includes(room._id);
     const unreadCount = roomReadState[room._id]?.unreadCount || room.unreadCount || 0;
     const isDirect = room.type === 'direct';
     const otherUserId = isDirect ? room.members.find((id: string) => id !== me) : undefined;
@@ -78,17 +126,33 @@ export function Sidebar() {
     const slug = room.slug || room.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
     return (
-      <button
+      <div
         key={room._id}
-        onClick={() => router.push(`/rooms/${room._id}`, `/rooms/${slug}`, { shallow: false })}
-        className={`
-          w-full group flex items-center gap-3 px-3 py-2 mx-2 my-0.5 rounded-[var(--radius-md)] transition-all duration-200 text-left
-          ${isActive
-            ? 'bg-[var(--color-primary)] text-white shadow-md translate-x-1'
-            : 'text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] hover:translate-x-1'
-          }
-        `}
+        draggable
+        onDragStart={() => setDragRoomId(room._id)}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={async () => {
+          if (!dragRoomId || dragRoomId === room._id) return;
+          const next = workspaceOrder.length ? [...workspaceOrder] : rooms.map((r) => r._id);
+          const from = next.indexOf(dragRoomId);
+          const to = next.indexOf(room._id);
+          if (from === -1 || to === -1) return;
+          next.splice(to, 0, next.splice(from, 1)[0]);
+          setLocalWorkspaceOrder(next);
+          setDragRoomId(null);
+          await setWorkspaceOrder(next).catch(() => null);
+        }}
       >
+        <button
+          onClick={() => router.push(`/rooms/${room._id}`, `/rooms/${slug}`, { shallow: false })}
+          className={`
+            w-full group flex items-center gap-3 px-3 py-2 mx-2 my-0.5 rounded-[var(--radius-md)] transition-all duration-200 text-left
+            ${isActive
+              ? 'bg-[var(--color-primary)] text-white shadow-md translate-x-1'
+              : 'text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] hover:translate-x-1'
+            }
+          `}
+        >
         <div className="relative shrink-0">
           <Avatar name={room.name} size={32} status={isDirect ? status : undefined} className={isActive ? 'border-white/20' : ''} />
           {!isDirect && onlineInRoom > 0 && !isActive && (
@@ -100,18 +164,38 @@ export function Sidebar() {
             <span className={`text-sm truncate leading-tight ${unreadCount > 0 ? 'font-bold' : 'font-medium opacity-90'}`}>
               {room.name}
             </span>
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (isFavorite) {
+                    const data = await removeFavorite(room._id);
+                    setFavoriteIds(data.roomIds || []);
+                  } else {
+                    const data = await addFavorite(room._id);
+                    setFavoriteIds(data.roomIds || []);
+                  }
+                }}
+                className={`p-1 rounded ${isFavorite ? 'text-yellow-400' : 'text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100'}`}
+                title={isFavorite ? 'Remove favorite' : 'Add favorite'}
+              >
+                <HiStar className="w-3.5 h-3.5" />
+              </button>
+              {unreadCount > 0 && (
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold min-w-[1.25rem] text-center ${isActive ? 'bg-white text-[var(--color-primary)] shadow-sm' : 'bg-[var(--color-primary)] text-white'}`}>
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
-            )}
+              )}
+            </div>
           </div>
           <div className="text-[9px] uppercase tracking-widest flex items-center gap-1 font-bold opacity-50 mt-0.5">
             {isDirect ? <HiChatBubbleLeftRight className="w-2.5 h-2.5" /> : <HiHashtag className="w-2.5 h-2.5" />}
             {room.type}
           </div>
         </div>
-      </button>
+        </button>
+      </div>
     );
   };
 
@@ -147,12 +231,12 @@ export function Sidebar() {
                   New Room
                 </Link>
                 <button
-                  onClick={() => { toggleTheme(); setAppMenuOpen(false); }}
+                  onClick={() => { onToggleTheme(); setAppMenuOpen(false); }}
                   className="w-full flex items-center gap-4 px-5 py-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-primary)] transition-all">
                   <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-[var(--color-warning)]/10' : 'bg-[var(--color-primary)]/10'}`}>
                     {theme === 'dark' ? <HiSun className="w-5 h-5 text-[var(--color-warning)]" /> : <HiMoon className="w-5 h-5 text-[var(--color-primary)]" />}
                   </div>
-                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  {theme === 'dark' ? 'Switch to Light' : theme === 'light' ? 'Switch to Midnight' : 'Switch to Dark'}
                 </button>
               </div>
             </div>
@@ -160,9 +244,20 @@ export function Sidebar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              const next = !sidebarCollapsed;
+              setSidebarCollapsed(next);
+              await patchPreferences({ sidebarCollapsed: next }).catch(() => null);
+            }}
+            className="p-2.5 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:scale-110 active:scale-90 transition-all"
+            title="Collapse sidebar"
+          >
+            <HiBars3BottomLeft className="w-5 h-5" />
+          </button>
           {/* Theme quick toggle */}
           <button
-            onClick={toggleTheme}
+            onClick={onToggleTheme}
             className="p-2.5 rounded-xl hover:bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:scale-110 active:scale-90 transition-all"
             title="Toggle theme"
           >
@@ -193,10 +288,34 @@ export function Sidebar() {
 
       {/* Room list */}
       <div className="flex-1 overflow-y-auto pb-6 space-y-2 modern-scroll">
+        {favoriteRooms.length > 0 && (
+          <section className="px-2">
+            <button
+              onClick={async () => {
+                const next = !favoritesOpen;
+                setFavoritesOpen(next);
+                await patchSidebarState({ sectionCollapsed: { favorites: !next } }).catch(() => null);
+              }}
+              className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
+            >
+              {favoritesOpen ? <HiChevronDown className="w-3.5 h-3.5" /> : <HiChevronRight className="w-3.5 h-3.5" />}
+              <HiStar className="w-4 h-4" />
+              <span>Favorites</span>
+            </button>
+            <div className={`overflow-hidden space-y-0.5 transition-all duration-500 ease-in-out ${favoritesOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+              {favoriteRooms.map(renderRoomItem)}
+            </div>
+          </section>
+        )}
+
         {groupRooms.length > 0 && (
           <section className="px-2">
             <button
-              onClick={() => setChannelsOpen(!channelsOpen)}
+              onClick={async () => {
+                const next = !channelsOpen;
+                setChannelsOpen(next);
+                await patchSidebarState({ sectionCollapsed: { textChannels: !next } }).catch(() => null);
+              }}
               className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
             >
               {channelsOpen ? <HiChevronDown className="w-3.5 h-3.5" /> : <HiChevronRight className="w-3.5 h-3.5" />}
@@ -212,7 +331,11 @@ export function Sidebar() {
         {directMessages.length > 0 && (
           <section className="px-2">
             <button
-              onClick={() => setDmsOpen(!dmsOpen)}
+              onClick={async () => {
+                const next = !dmsOpen;
+                setDmsOpen(next);
+                await patchSidebarState({ sectionCollapsed: { dms: !next } }).catch(() => null);
+              }}
               className="w-full flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors group"
             >
               {dmsOpen ? <HiChevronDown className="w-3.5 h-3.5" /> : <HiChevronRight className="w-3.5 h-3.5" />}

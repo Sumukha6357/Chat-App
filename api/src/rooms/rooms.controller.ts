@@ -107,8 +107,9 @@ export class RoomsController {
       update.name = body.name;
       update.nameLower = body.name.toLowerCase();
     }
-    if (body.description) update.description = body.description;
-    if (body.image) update.image = body.image;
+    if (body.topic !== undefined) update.topic = body.topic;
+    if (body.description !== undefined) update.description = body.description;
+    if (body.image !== undefined) update.image = body.image;
     return this.rooms.update(roomId, update);
   }
 

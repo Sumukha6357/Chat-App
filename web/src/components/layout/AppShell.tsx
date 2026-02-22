@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { useAuthStore } from '@/store/authStore';
+import { usePreferencesStore } from '@/store/preferencesStore';
 
 interface AppShellProps {
     children: ReactNode;
@@ -10,13 +11,14 @@ interface AppShellProps {
 
 export function AppShell({ children, sidebar, rightPanel }: AppShellProps) {
     const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const sidebarCollapsed = usePreferencesStore((s) => s.sidebarCollapsed);
 
     if (!isAuthenticated) return <>{children}</>;
 
     return (
         <div className="flex h-screen w-full bg-[var(--color-bg)] overflow-hidden font-sans">
             {/* Rooms/DMs Sidebar - Slack/Discord Density */}
-            <aside className="hidden md:flex w-72 lg:w-80 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] z-30 transition-all duration-300">
+            <aside className={`hidden md:flex ${sidebarCollapsed ? 'w-20' : 'w-72 lg:w-80'} flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] z-30 transition-all duration-300`}>
                 {sidebar || <Sidebar />}
             </aside>
 

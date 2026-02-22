@@ -52,6 +52,26 @@ export function connectSocket(token: string) {
     }
   });
 
+  socket.on('message_edited', (payload) => {
+    if (!payload?.roomId || !payload?.message?._id) return;
+    patchMessageInStore(payload.roomId, payload.message._id, payload.message);
+  });
+
+  socket.on('message_deleted', (payload) => {
+    if (!payload?.roomId || !payload?.messageId) return;
+    patchMessageInStore(payload.roomId, payload.messageId, payload.message || {});
+  });
+
+  socket.on('message_reactions', (payload) => {
+    if (!payload?.roomId || !payload?.messageId) return;
+    patchMessageInStore(payload.roomId, payload.messageId, { reactions: payload.reactions || [] });
+  });
+
+  socket.on('thread_reply', (payload) => {
+    if (!payload?.message?.roomId) return;
+    useChatStore.getState().addMessage(payload.message.roomId, { ...payload.message, status: 'sent' });
+  });
+
   socket.on('typing_start', (payload) => {
     useChatStore.getState().setTyping(payload.roomId, payload.userId, true);
   });
@@ -206,4 +226,11 @@ function sendWithAck(payload: any) {
       resolve(ack);
     });
   });
+}
+
+function patchMessageInStore(roomId: string, messageId: string, patch: any) {
+  const state = useChatStore.getState();
+  const current = state.messages[roomId] || [];
+  const next = current.map((m) => (m._id === messageId ? { ...m, ...patch } : m));
+  state.mergeServerMessages(roomId, next, 'replace');
 }

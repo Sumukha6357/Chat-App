@@ -44,6 +44,7 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
   const [isBlocking, setIsBlocking] = useState(false);
   const [roomSettingsOpen, setRoomSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [topic, setTopic] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const cooldownRef = useRef(0);
   const showToast = useToastStore((s) => s.show);
@@ -63,6 +64,10 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
       setIsBlocked(blocked);
     }).catch(() => setIsBlocked(false));
   }, [isDirect, otherUserId]);
+
+  useEffect(() => {
+    setTopic((currentRoom as any)?.topic || '');
+  }, [currentRoom]);
 
   // Handle outside click for menu
   useEffect(() => {
@@ -137,6 +142,28 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
     }
   };
 
+  const onEditTopic = async () => {
+    if (!roomId) return;
+    const next = prompt('Channel topic', topic || '');
+    if (next === null) return;
+    try {
+      const updated = await apiRequest<any>(`/rooms/${roomId}`, {
+        method: 'PATCH',
+        auth: true,
+        body: { topic: next },
+      });
+      useChatStore.getState().setRooms(
+        useChatStore
+          .getState()
+          .rooms.map((r: any) => (r._id === roomId ? { ...r, ...(updated || {}), topic: next } : r)),
+      );
+      setTopic(next);
+      showToast('Topic updated', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update topic', 'error');
+    }
+  };
+
   // Presence text — only show meaningful info
   const onlineCount = presence?.onlineCount ?? 0;
   const presenceText = isDirect && otherPresence
@@ -191,6 +218,7 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
 
             {subtitle && presenceText && <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />}
             {subtitle && <span className="opacity-60">{subtitle}</span>}
+            {topic && <span className="opacity-80 normal-case tracking-normal text-[11px]">• {topic}</span>}
           </div>
         </div>
 
@@ -235,6 +263,14 @@ export function Header({ title, subtitle, onBack, onSearchToggle, searchOpen }: 
             title="Search"
           >
             <HiMagnifyingGlass className="w-5 h-5" />
+          </button>
+
+          <button
+            onClick={onEditTopic}
+            className="p-2.5 rounded-2xl hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:scale-110 active:scale-90 transition-all shadow-sm"
+            title="Edit topic"
+          >
+            <HiInformationCircle className="w-5 h-5" />
           </button>
 
           {/* 3-dots Menu */}

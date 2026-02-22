@@ -4,13 +4,14 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
 import { Header } from '@/components/layout/Header';
+import { CommandPalette } from '@/components/layout/CommandPalette';
 import { Footer } from '@/components/layout/Footer';
 import { MessageList } from '@/components/chat/MessageList';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { apiRequest, markRoomRead, fetchRoomReadState, fetchUsersPresence, searchRoomMessages } from '@/services/api';
+import { apiRequest, markRoomRead, fetchRoomReadState, fetchUsersPresence, searchRoomMessages, updateLastState } from '@/services/api';
 import { connectSocket, emitSocket } from '@/services/socket';
 import {
   attachPresenceListeners,
@@ -105,6 +106,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     if (!roomId || roomId === 'new') return;
+    updateLastState(undefined, roomId).catch(() => null);
     setActiveRoom(roomId);
     setLoading(true);
     apiRequest<{ items: any[]; nextCursor: any }>(`/rooms/${roomId}/messages?limit=30`, { auth: true })
@@ -318,6 +320,7 @@ export default function RoomPage() {
 
   return (
     <AppShell sidebar={<Sidebar />}>
+      <CommandPalette />
       <div className="flex flex-col h-full min-w-0">
         <Header
           title={currentRoom?.name || 'Room'}
@@ -413,4 +416,3 @@ export default function RoomPage() {
     </AppShell>
   );
 }
-

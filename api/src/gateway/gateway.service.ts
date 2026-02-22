@@ -12,6 +12,11 @@ export class GatewayService {
     this.server = server;
   }
 
+  emitToRoom(roomId: string, event: string, payload: unknown) {
+    if (!this.server) return;
+    this.server.to(roomId).emit(event, payload);
+  }
+
   async emitNotificationToUser(userId: string, payload: unknown) {
     if (!this.server) return;
     const sockets = await this.presence.getUserSockets(userId);

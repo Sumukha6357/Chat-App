@@ -295,4 +295,54 @@ describe('Integration', () => {
     socket1.disconnect();
     socket2.disconnect();
   });
+
+  test('Preferences + message interactions persist', async () => {
+    const user = await registerUser('prefs@test.com', 'prefuser', 'password123');
+    const token = user.accessToken;
+    const roomsService = app.get(RoomsService);
+    const room = await roomsService.createRoom({
+      name: 'prefs-room',
+      nameLower: 'prefs-room',
+      type: 'group',
+      members: [user.userId] as any,
+      admins: [user.userId] as any,
+      createdBy: user.userId as any,
+      topic: '',
+      description: '',
+    });
+
+    const prefRes = await request(baseUrl)
+      .patch('/me/preferences')
+      .set('authorization', `Bearer ${token}`)
+      .send({ theme: 'midnight', density: 'compact', fontSize: 'lg', sidebarCollapsed: true });
+    expect(prefRes.status).toBe(200);
+    expect(prefRes.body.data.theme).toBe('midnight');
+
+    const draftRes = await request(baseUrl)
+      .put(`/drafts/${room._id}`)
+      .set('authorization', `Bearer ${token}`)
+      .send({ content: 'hello draft' });
+    expect(draftRes.status).toBe(200);
+
+    const msg = await app.get(MessagesService).sendMessage({
+      roomId: room._id as any,
+      senderId: user.userId as any,
+      content: 'hello @alice',
+      type: 'text',
+    });
+    const messageId = (msg as any)._id.toString();
+
+    const editRes = await request(baseUrl)
+      .patch(`/rooms/${room._id}/messages/${messageId}`)
+      .set('authorization', `Bearer ${token}`)
+      .send({ content: 'edited hello' });
+    expect(editRes.status).toBe(200);
+
+    const reactRes = await request(baseUrl)
+      .post(`/rooms/${room._id}/messages/${messageId}/reactions`)
+      .set('authorization', `Bearer ${token}`)
+      .send({ emoji: '👍' });
+    expect(reactRes.status).toBe(201);
+    expect(Array.isArray(reactRes.body.data.reactions)).toBe(true);
+  });
 });

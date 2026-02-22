@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { queueSendMessage } from '@/services/socket';
-import { uploadFile } from '@/services/api';
+import { getDraft, upsertDraft, uploadFile } from '@/services/api';
 import { Button } from '../ui/Button';
 import { useToastStore } from '@/store/toastStore';
 import { useAuthStore } from '@/store/authStore';
@@ -26,6 +26,23 @@ export function MessageInput({ roomId }: MessageInputProps) {
     te.style.height = '40px';
     te.style.height = `${Math.min(te.scrollHeight, 200)}px`;
   }, [content]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    getDraft(roomId)
+      .then((d) => {
+        if (typeof d?.content === 'string') setContent(d.content);
+      })
+      .catch(() => null);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    const timer = setTimeout(() => {
+      upsertDraft(roomId, content).catch(() => null);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [roomId, content]);
 
   const onSend = () => {
     const trimmed = content.trim();
@@ -55,6 +72,7 @@ export function MessageInput({ roomId }: MessageInputProps) {
     });
 
     setContent('');
+    upsertDraft(roomId, '').catch(() => null);
     setAttachments([]);
     textareaRef.current?.focus();
   };

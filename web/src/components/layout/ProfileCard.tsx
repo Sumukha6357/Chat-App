@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useToastStore } from '@/store/toastStore';
-import { apiRequest } from '@/services/api';
+import { apiRequest, patchPreferences } from '@/services/api';
 import { Avatar } from '../ui/Avatar';
 import {
     HiXMark, HiPencil, HiPhoto, HiSun, HiMoon,
@@ -30,6 +30,12 @@ export function ProfileCard({ onClose }: ProfileCardProps) {
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
     const [saving, setSaving] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+
+    const onToggleTheme = async () => {
+        const next = theme === 'dark' ? 'light' : theme === 'light' ? 'midnight' : 'dark';
+        toggleTheme();
+        await patchPreferences({ theme: next }).catch(() => null);
+    };
 
     useEffect(() => {
         apiRequest<any>('/users/me', { auth: true })
@@ -143,13 +149,21 @@ export function ProfileCard({ onClose }: ProfileCardProps) {
             {/* Actions */}
             <div className="py-1">
                 <button
-                    onClick={toggleTheme}
+                    onClick={onToggleTheme}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
                 >
                     {theme === 'dark'
                         ? <HiSun className="w-4 h-4 text-[var(--color-warning)]" />
                         : <HiMoon className="w-4 h-4 text-[var(--color-primary)]" />}
-                    <span>{theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}</span>
+                    <span>{theme === 'dark' ? 'Switch to Light mode' : theme === 'light' ? 'Switch to Midnight mode' : 'Switch to Dark mode'}</span>
+                </button>
+
+                <button
+                    onClick={() => { onClose(); router.push('/settings'); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                >
+                    <HiUser className="w-4 h-4" />
+                    <span>Settings</span>
                 </button>
 
                 <button
