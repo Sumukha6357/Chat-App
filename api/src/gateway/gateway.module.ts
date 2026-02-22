@@ -9,14 +9,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ChatGateway } from './chat.gateway';
 import { GatewayService } from './gateway.service';
 import { WsJwtGuard } from '../auth/guards/ws-jwt.guard';
-import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
     PresenceModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
     forwardRef(() => ChatModule),
-    RoomsModule,
+    forwardRef(() => RoomsModule),
     forwardRef(() => NotificationsModule),
     JwtModule.registerAsync({
       inject: [ConfigService],
