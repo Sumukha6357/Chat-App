@@ -15,7 +15,7 @@ import { CommonModule } from '../common/common.module';
   imports: [
     PresenceModule,
     UsersModule,
-    ChatModule,
+    forwardRef(() => ChatModule),
     RoomsModule,
     forwardRef(() => NotificationsModule),
     JwtModule.registerAsync({

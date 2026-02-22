@@ -9,6 +9,7 @@ import { MessagesService } from './messages.service';
 import { MessagesController } from './messages.controller';
 import { UploadsController } from './uploads.controller';
 import { RoomsModule } from '../rooms/rooms.module';
+import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RoomsModule } from '../rooms/rooms.module';
       { name: MessageMention.name, schema: MessageMentionSchema },
     ]),
     forwardRef(() => RoomsModule),
+    forwardRef(() => GatewayModule),
   ],
   controllers: [MessagesController, UploadsController],
   providers: [MessagesRepository, MessagesService],
