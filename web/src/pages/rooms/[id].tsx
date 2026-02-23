@@ -55,6 +55,9 @@ export default function RoomPage() {
   const prevLenRef = useRef(0);
   const [loading, setLoading] = useState(false);
   const [roomName, setRoomName] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState('');
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
@@ -272,6 +275,23 @@ export default function RoomPage() {
     router.push(`/rooms/${room._id}`);
   };
 
+  const createInviteLink = async () => {
+    if (!roomId) return;
+    setInviteLoading(true);
+    setInviteError('');
+    try {
+      const result = await apiRequest<{ shortUrl: string }>(`/rooms/${roomId}/invite-link`, {
+        method: 'POST',
+        auth: true,
+      });
+      setInviteLink(result.shortUrl || '');
+    } catch (error) {
+      setInviteError(error instanceof Error ? error.message : 'Failed to create invite link');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   if (roomId === 'new') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] p-6">
@@ -328,6 +348,17 @@ export default function RoomPage() {
           searchOpen={searchOpen}
           onSearchToggle={() => setSearchOpen(!searchOpen)}
         />
+        {roomId ? (
+          <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2">
+            <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-2">
+              <Button size="sm" onClick={createInviteLink} disabled={inviteLoading}>
+                {inviteLoading ? 'Generating...' : 'Generate Invite Link'}
+              </Button>
+              {inviteLink ? <span className="text-xs text-emerald-600 break-all">{inviteLink}</span> : null}
+              {inviteError ? <span className="text-xs text-red-600">{inviteError}</span> : null}
+            </div>
+          </div>
+        ) : null}
 
         <div className="flex-1 overflow-y-auto bg-[var(--color-bg)]/50 backdrop-blur-md relative" ref={scrollRef}>
           {loading && (

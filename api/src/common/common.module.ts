@@ -12,6 +12,7 @@ import { ErrorTrackingService } from './utils/error-tracking.service';
 import { HealthController } from './health.controller';
 import { MetricsController } from './metrics.controller';
 import { MetricsService } from './metrics.service';
+import { UrlShortenerService } from './utils/url-shortener.service';
 
 @Global()
 @Module({
@@ -21,6 +22,7 @@ import { MetricsService } from './metrics.service';
     RateLimitService,
     ErrorTrackingService,
     MetricsService,
+    UrlShortenerService,
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
@@ -46,6 +48,6 @@ import { MetricsService } from './metrics.service';
       useClass: RolesGuard,
     },
   ],
-  exports: [AppLogger, RateLimitService],
+  exports: [AppLogger, RateLimitService, UrlShortenerService],
 })
 export class CommonModule { }

@@ -20,6 +20,8 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { MessagesService } from '../chat/messages.service';
+import { UrlShortenerService } from '../common/utils/url-shortener.service';
+import { ConfigService } from '../config/config.service';
 
 @Controller('rooms')
 @Roles('user')
@@ -27,6 +29,8 @@ export class RoomsController {
   constructor(
     private readonly rooms: RoomsService,
     private readonly messages: MessagesService,
+    private readonly urlShortener: UrlShortenerService,
+    private readonly config: ConfigService,
   ) { }
 
   @Get()
@@ -184,6 +188,27 @@ export class RoomsController {
       body.lastReadAt,
     );
     return { roomId, lastReadMessageId: body.lastReadMessageId, lastReadAt: body.lastReadAt };
+  }
+
+  @Post(':id/invite-link')
+  async createInviteLink(@Param('id') roomSlug: string, @Req() req: any) {
+    const room = await this.rooms.findByIdOrSlug(roomSlug);
+    if (!room) throw new NotFoundException('Room not found');
+    const roomId = room._id.toString();
+    const isMember = await this.rooms.isMember(roomId, req.user.sub);
+    if (!isMember) throw new ForbiddenException('Not a member of this room');
+
+    const shareId = room.slug || roomId;
+    const longUrl = `${this.config.get('inviteBaseUrl')}/rooms/${shareId}?invite=1`;
+    const alias = `chat-${shareId}`.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 28);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const shortUrl = await this.urlShortener.shorten(longUrl, alias, expiresAt);
+    return {
+      feature: 'invite-links',
+      roomId,
+      longUrl,
+      shortUrl,
+    };
   }
 
   @Get(':id/read-state')

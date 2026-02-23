@@ -20,6 +20,9 @@ export interface AppConfig {
   rateLimitDuration: number;
   wsMaxMessageSize: number;
   corsOrigins: string[];
+  shortenerBaseUrl: string;
+  shortenerApiToken?: string;
+  inviteBaseUrl: string;
 }
 
 @Injectable()
@@ -45,6 +48,9 @@ export class ConfigService {
       rateLimitDuration: Number(process.env.RATE_LIMIT_DURATION || 60),
       wsMaxMessageSize: Number(process.env.WS_MAX_MESSAGE_SIZE || 1_000_000),
       corsOrigins: (process.env.CORS_ORIGINS || '').split(',').map((v) => v.trim()).filter(Boolean),
+      shortenerBaseUrl: process.env.SHORTENER_BASE_URL || 'http://localhost:8080',
+      shortenerApiToken: process.env.SHORTENER_API_TOKEN || undefined,
+      inviteBaseUrl: process.env.CHAT_INVITE_BASE_URL || 'http://localhost:3000',
     };
   }
 
