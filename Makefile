@@ -1,125 +1,56 @@
-# ==============================
-# Project Docker Operations
-# ==============================
+# Chat App - Titanium Docker Management
+# Standardized Makefile for Prod, Local, and Dev environments
 
-DC = docker compose
-BASE = -f docker-compose.yml
-DEV = -f docker-compose.dev.yml
-PROD = -f docker-compose.prod.yml
-LOCAL = -f docker-compose.local.yml
+DC=docker-compose
+BASE=-f docker-compose.yml
+PROD=-f docker-compose.prod.yml
+LOCAL=-f docker-compose.local.yml
+DEV=-f docker-compose.dev.yml
 
-# Default service for shell exec
-SERVICE ?= api
+.PHONY: help prod-up prod-down prod-build prod-stop local-up local-down local-build local-stop dev-up dev-down dev-build dev-stop
 
-# ==============================
-# ENVIRONMENTS
-# ==============================
+help:
+	@echo "Titanium Docker Management"
+	@echo "Usage: make [env]-[action]"
+	@echo ""
+	@echo "Actions: up, down, build, stop"
+	@echo "Environments: prod, local, dev"
 
-dev:
-	$(DC) $(BASE) $(DEV) up -d --build
+# Production
+prod-up:
+	$(DC) $(BASE) $(PROD) up -d
 
-prod:
-	$(DC) $(BASE) $(PROD) up -d --build
+prod-down:
+	$(DC) $(BASE) $(PROD) down
 
-local:
-	$(DC) $(BASE) $(LOCAL) up -d --build
+prod-build:
+	$(DC) $(BASE) $(PROD) build --no-cache
 
-# Quick start for server workflow
-run: dev
+prod-stop:
+	$(DC) $(BASE) $(PROD) stop
 
-# ==============================
-# BASIC OPERATIONS
-# ==============================
+# Local (Docker)
+local-up:
+	$(DC) $(BASE) $(LOCAL) up -d
 
-up:
-	$(DC) $(BASE) up -d
+local-down:
+	$(DC) $(BASE) $(LOCAL) down
 
-build:
-	$(DC) $(BASE) build
+local-build:
+	$(DC) $(BASE) $(LOCAL) build --no-cache
 
-down:
-	$(DC) $(BASE) down
+local-stop:
+	$(DC) $(BASE) $(LOCAL) stop
 
-stop:
-	$(DC) $(BASE) stop
+# Development (Hot-reload)
+dev-up:
+	$(DC) $(BASE) $(DEV) up -d
 
-start:
-	$(DC) $(BASE) start
+dev-down:
+	$(DC) $(BASE) $(DEV) down
 
-restart:
-	$(DC) $(BASE) down
-	$(DC) $(BASE) up -d --build
+dev-build:
+	$(DC) $(BASE) $(DEV) build --no-cache
 
-# ==============================
-# LOGGING & DEBUGGING
-# ==============================
-
-logs:
-	$(DC) $(BASE) logs -f
-
-logs-dev:
-	$(DC) $(BASE) $(DEV) logs -f
-
-logs-prod:
-	$(DC) $(BASE) $(PROD) logs -f
-
-ps:
-	$(DC) $(BASE) ps
-
-exec:
-	$(DC) $(BASE) exec $(SERVICE) sh
-
-exec-api:
-	$(DC) $(BASE) exec api sh
-
-exec-web:
-	$(DC) $(BASE) exec web sh
-
-# ==============================
-# CLEAN & REBUILD
-# ==============================
-
-rebuild:
-	$(DC) $(BASE) down --remove-orphans
-	$(DC) $(BASE) up -d --build
-
-rebuild-no-cache:
-	$(DC) $(BASE) build --no-cache
-	$(DC) $(BASE) up -d
-
-reset:
-	$(DC) $(BASE) down --rmi local --volumes --remove-orphans
-
-clean:
-	docker system prune -f
-
-clean-all:
-	docker system prune -a --volumes -f
-
-# ==============================
-# IMAGE OPERATIONS
-# ==============================
-
-images:
-	docker images
-
-pull:
-	$(DC) $(BASE) pull
-
-push:
-	$(DC) $(BASE) push
-
-# ==============================
-# HEALTH CHECK
-# ==============================
-
-status:
-	$(DC) $(BASE) ps
-
-top:
-	$(DC) $(BASE) top
-
-stats:
-	docker stats
-
-.PHONY: dev prod local run up build down stop start restart logs logs-dev logs-prod ps exec exec-api exec-web rebuild rebuild-no-cache reset clean clean-all images pull push status top stats
+dev-stop:
+	$(DC) $(BASE) $(DEV) stop

@@ -23,6 +23,9 @@ export class MessageMention {
   targetId!: string;
 }
 
-export const MessageMentionSchema = SchemaFactory.createForClass(MessageMention);
-MessageMentionSchema.index({ messageId: 1, userId: 1, targetType: 1, targetId: 1 }, { unique: true });
-
+export const MessageMentionSchema =
+  SchemaFactory.createForClass(MessageMention);
+MessageMentionSchema.index(
+  { messageId: 1, userId: 1, targetType: 1, targetId: 1 },
+  { unique: true },
+);

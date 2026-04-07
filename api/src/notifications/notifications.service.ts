@@ -1,4 +1,10 @@
-import { forwardRef, Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Queue, Worker } from 'bullmq';
 import { ConfigService } from '../config/config.service';
 import { PresenceService } from '../presence/presence.service';
@@ -34,7 +40,10 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     this.queue = new Queue('notifications', {
       connection,
       prefix,
-      defaultJobOptions: { attempts: 3, backoff: { type: 'exponential', delay: 500 } },
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 500 },
+      },
     });
     this.dlq = new Queue('notifications_dlq', { connection, prefix });
 
@@ -73,7 +82,11 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     return this.queue;
   }
 
-  async notifyUser(userId: string, type: NotificationType, payload: Record<string, unknown>) {
+  async notifyUser(
+    userId: string,
+    type: NotificationType,
+    payload: Record<string, unknown>,
+  ) {
     const online = await this.presence.isUserOnline(userId);
     if (online) {
       await this.gateway.emitNotificationToUser(userId, { type, payload });

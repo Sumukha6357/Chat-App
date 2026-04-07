@@ -1,6 +1,5 @@
 import { useNotificationStore } from '@/store/notificationStore';
 import { Card } from '../ui/Card';
-import { Avatar } from '../ui/Avatar';
 import { HiBell, HiChatBubbleLeft, HiInformationCircle } from 'react-icons/hi2';
 
 export function NotificationPanel() {
@@ -35,7 +34,7 @@ export function NotificationPanel() {
                   <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed group-hover:text-[var(--color-text)] transition-colors">
                     {typeof item.payload === 'string'
                       ? item.payload
-                      : String((item.payload as any)?.content || JSON.stringify(item.payload))}
+                      : String((item.payload as Record<string, unknown>)?.content || JSON.stringify(item.payload))}
                   </p>
                 </div>
               </div>

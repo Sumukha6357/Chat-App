@@ -1,0 +1,8 @@
+{
+  "name": "chat-app",
+  "version": "1.0.0",
+  "description": "Seeder wrapper for Chat-App",
+  "scripts": {
+    "seed": "npm run seed --prefix api"
+  }
+}

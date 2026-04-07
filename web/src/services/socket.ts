@@ -3,26 +3,32 @@ import { useChatStore } from '@/store/chatStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { updatePresence } from './presence';
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000/ws';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws';
 
 let socket: Socket | null = null;
-const pending: Array<{ event: string; payload: any; cb?: (...args: any[]) => void }> = [];
+const pending: Array<{ event: string; payload: unknown; cb?: (...args: unknown[]) => void }> = [];
 const MAX_ATTEMPTS = 5;
 let flushing = false;
 
 export function connectSocket(token: string) {
   if (socket && socket.connected) return socket;
 
+  console.log('Connecting to WebSocket at:', WS_URL);
+  
   socket = io(WS_URL, {
     auth: { token },
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'], // Add polling as fallback
     reconnection: true,
     reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    timeout: 5000,
   });
 
   socket.on('connect', () => {
+    console.log('WebSocket connected successfully');
     const activeRoomId = useChatStore.getState().activeRoomId;
     if (activeRoomId) {
+      console.log('Joining room:', activeRoomId);
       socket?.emit('join_room', { roomId: activeRoomId });
     }
     while (pending.length > 0) {
@@ -32,7 +38,19 @@ export function connectSocket(token: string) {
     flushOutboundQueue();
   });
 
+  socket.on('connect_error', (error) => {
+    console.error('WebSocket connection error:', error);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('WebSocket disconnected:', reason);
+  });
+
   socket.on('message', (message) => {
+    console.log('Received WebSocket message:', message);
+    console.log('Current activeRoomId:', useChatStore.getState().activeRoomId);
+    console.log('Message roomId:', message.roomId);
+    
     const state = useChatStore.getState();
     const activeRoomId = state.activeRoomId;
     if (message.clientMessageId) {
@@ -40,13 +58,16 @@ export function connectSocket(token: string) {
         (m) => m.clientMessageId === message.clientMessageId,
       );
       if (existing) {
+        console.log('Updating existing message with server ID');
         state.updateMessageId(message.roomId, message.clientMessageId, message._id, message.createdAt);
         state.setMessageStatus(message.roomId, message.clientMessageId, 'sent');
         state.dequeueOutbound(message.clientMessageId);
         return;
       }
     }
+    console.log('Adding new message to store');
     state.addMessage(message.roomId, { ...message, status: 'sent' });
+    console.log('Messages in store after adding:', state.messages[message.roomId]);
     if (activeRoomId !== message.roomId) {
       state.incrementRoomUnread(message.roomId);
     }
@@ -116,7 +137,7 @@ export function disconnectSocket() {
   socket = null;
 }
 
-export function emitSocket(event: string, payload: any, cb?: (...args: any[]) => void) {
+export function emitSocket(event: string, payload: unknown, cb?: (...args: unknown[]) => void) {
   if (!socket || !socket.connected) {
     pending.push({ event, payload, cb });
     return;
@@ -189,7 +210,7 @@ export async function flushOutboundQueue() {
 
       const ack = await sendWithAck(item.payload);
       if (ack?.ok && ack.messageId) {
-        state.updateMessageId(item.roomId, item.clientMessageId, ack.messageId, ack.createdAt);
+        state.updateMessageId(item.roomId, item.clientMessageId, ack.messageId, ack.createdAt ? String(ack.createdAt) : undefined);
         state.setMessageStatus(item.roomId, item.clientMessageId, 'sent');
         state.dequeueOutbound(item.clientMessageId);
         continue;
@@ -207,28 +228,36 @@ export async function flushOutboundQueue() {
   }
 }
 
-function sendWithAck(payload: any) {
-  return new Promise<any>((resolve) => {
+function sendWithAck(payload: unknown) {
+  return new Promise<{ ok: boolean; messageId?: string; createdAt?: number }>((resolve) => {
     if (!socket || !socket.connected) {
+      console.log('Socket not connected, resolving with ok: false');
       resolve({ ok: false });
       return;
     }
+    console.log('Sending message with ack:', payload);
     let settled = false;
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
+      console.log('Message send timeout');
       resolve({ ok: false });
     }, 5000);
-    socket.emit('send_message', payload, (ack: any) => {
+    socket.emit('send_message', payload, (ack: unknown) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve(ack);
+      console.log('Received ack:', ack);
+      if (ack && typeof ack === 'object' && 'ok' in ack) {
+        resolve(ack as { ok: boolean; messageId?: string; createdAt?: number });
+      } else {
+        resolve({ ok: false });
+      }
     });
   });
 }
 
-function patchMessageInStore(roomId: string, messageId: string, patch: any) {
+function patchMessageInStore(roomId: string, messageId: string, patch: Record<string, unknown>) {
   const state = useChatStore.getState();
   const current = state.messages[roomId] || [];
   const next = current.map((m) => (m._id === messageId ? { ...m, ...patch } : m));

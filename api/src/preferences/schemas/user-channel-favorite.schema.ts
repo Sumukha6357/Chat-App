@@ -14,6 +14,6 @@ export class UserChannelFavorite {
   roomId!: Types.ObjectId;
 }
 
-export const UserChannelFavoriteSchema = SchemaFactory.createForClass(UserChannelFavorite);
+export const UserChannelFavoriteSchema =
+  SchemaFactory.createForClass(UserChannelFavorite);
 UserChannelFavoriteSchema.index({ userId: 1, roomId: 1 }, { unique: true });
-

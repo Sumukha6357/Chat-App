@@ -68,6 +68,8 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
+  console.log('App rendering, Component:', Component.name || 'Unknown');
+  
   return (
     <ThemeProvider>
       <main className={inter.className}>

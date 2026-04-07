@@ -7,6 +7,12 @@ export interface Room {
   type: 'direct' | 'group';
   members: string[];
   unreadCount?: number;
+  topic?: string;
+  avatar?: string;
+  description?: string;
+  adminIds?: string[];
+  lastReadMessageId?: string;
+  lastReadAt?: string;
 }
 
 export interface Message {
@@ -142,7 +148,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return;
       }
     }
-    set({ messages: { ...get().messages, [roomId]: [...current, message] } });
+    const next = [...current, message];
+    next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    set({ messages: { ...get().messages, [roomId]: next } });
   },
   mergeServerMessages: (roomId, messages, mode = 'replace') => {
     const current = get().messages[roomId] || [];
@@ -179,6 +187,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
       next = [...existingFiltered, ...mergedServer];
     }
+
+    // Always sort by createdAt ASCENDING for UI consistency
+    next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
     set({ messages: { ...get().messages, [roomId]: next } });
   },

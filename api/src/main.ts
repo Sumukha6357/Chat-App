@@ -15,7 +15,9 @@ import { NotificationsService } from './notifications/notifications.service';
 import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
 
   const config = app.get(ConfigService);
   const logger = app.get(AppLogger);

@@ -28,7 +28,12 @@ export class RateLimitService {
     return this.limiter.consume(key, points);
   }
 
-  async consumeWithLimit(key: string, maxPoints: number, durationSeconds: number, points = 1) {
+  async consumeWithLimit(
+    key: string,
+    maxPoints: number,
+    durationSeconds: number,
+    points = 1,
+  ) {
     const cacheKey = `${maxPoints}:${durationSeconds}`;
     let limiter = this.customLimiters.get(cacheKey);
     if (!limiter) {

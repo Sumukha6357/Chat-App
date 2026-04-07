@@ -7,7 +7,13 @@ export type UserSidebarStateDocument = HydratedDocument<UserSidebarState>;
 export class UserSidebarState {
   _id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  })
   userId!: Types.ObjectId;
 
   @Prop({
@@ -27,5 +33,5 @@ export class UserSidebarState {
   };
 }
 
-export const UserSidebarStateSchema = SchemaFactory.createForClass(UserSidebarState);
-
+export const UserSidebarStateSchema =
+  SchemaFactory.createForClass(UserSidebarState);

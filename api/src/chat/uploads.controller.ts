@@ -30,7 +30,7 @@ type MulterNameCallback = (error: Error | null, filename: string) => void;
 @Controller('uploads')
 @Roles('user')
 export class UploadsController {
-  constructor(private readonly rooms: RoomsService) { }
+  constructor(private readonly rooms: RoomsService) {}
 
   @Post()
   @UseInterceptors(
@@ -54,7 +54,11 @@ export class UploadsController {
         },
       }),
       limits: { fileSize: MAX_FILE_SIZE },
-      fileFilter: (req: any, file: any, cb: (error: Error | null, accept: boolean) => void) => {
+      fileFilter: (
+        req: any,
+        file: any,
+        cb: (error: Error | null, accept: boolean) => void,
+      ) => {
         if (!ALLOWED_MIME.has(file.mimetype)) {
           cb(new BadRequestException('Unsupported file type') as any, false);
           return;

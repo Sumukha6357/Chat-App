@@ -21,4 +21,3 @@ export class MessageEdit {
 }
 
 export const MessageEditSchema = SchemaFactory.createForClass(MessageEdit);
-

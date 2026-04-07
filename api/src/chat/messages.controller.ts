@@ -29,20 +29,34 @@ export class MessagesController {
   ) {}
 
   @Get()
-  async list(@Param('roomId') roomSlug: string, @Query() query: MessageQueryDto, @Req() req: any) {
+  async list(
+    @Param('roomId') roomSlug: string,
+    @Query() query: MessageQueryDto,
+    @Req() req: any,
+  ) {
+    console.log('Fetching messages for room:', roomSlug, 'query:', query);
+
     const room = await this.rooms.findByIdOrSlug(roomSlug);
+    console.log('Room found:', !!room, 'room data:', room?._id);
     if (!room) throw new NotFoundException('Room not found');
     const roomId = room._id.toString();
 
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
+    console.log('User is member:', isMember, 'userId:', req.user.sub);
     if (!isMember) {
       throw new ForbiddenException('Not a room member');
     }
 
-    const cursor = query.cursorId && query.cursorCreatedAt
-      ? { id: query.cursorId, createdAt: new Date(query.cursorCreatedAt) }
-      : undefined;
-    const items = await this.messages.getMessages(roomId, query.limit || 50, cursor);
+    const cursor =
+      query.cursorId && query.cursorCreatedAt
+        ? { id: query.cursorId, createdAt: new Date(query.cursorCreatedAt) }
+        : undefined;
+    const items = await this.messages.getMessages(
+      roomId,
+      query.limit || 50,
+      cursor,
+    );
+    console.log('Messages fetched from database:', items.length, items);
     const last = items[items.length - 1] as any;
     const nextCursor = last
       ? { id: last._id?.toString?.() || last._id, createdAt: last.createdAt }
@@ -67,10 +81,16 @@ export class MessagesController {
     }
     const term = (q || '').trim();
     if (!term) return { items: [], nextCursor: null };
-    const cursor = query.cursorId && query.cursorCreatedAt
-      ? { id: query.cursorId, createdAt: new Date(query.cursorCreatedAt) }
-      : undefined;
-    const items = await this.messages.searchMessages(roomId, term, query.limit || 50, cursor);
+    const cursor =
+      query.cursorId && query.cursorCreatedAt
+        ? { id: query.cursorId, createdAt: new Date(query.cursorCreatedAt) }
+        : undefined;
+    const items = await this.messages.searchMessages(
+      roomId,
+      term,
+      query.limit || 50,
+      cursor,
+    );
     const last = items[items.length - 1] as any;
     const nextCursor = last
       ? { id: last._id?.toString?.() || last._id, createdAt: last.createdAt }
@@ -90,7 +110,11 @@ export class MessagesController {
     const roomId = room._id.toString();
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a room member');
-    const message = await this.messages.editMessage(messageId, req.user.sub, body.content);
+    const message = await this.messages.editMessage(
+      messageId,
+      req.user.sub,
+      body.content,
+    );
     this.gateway.emitToRoom(roomId, 'message_edited', { roomId, message });
     return { message };
   }
@@ -106,8 +130,15 @@ export class MessagesController {
     const roomId = room._id.toString();
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a room member');
-    const message = await this.messages.softDeleteMessage(messageId, req.user.sub);
-    this.gateway.emitToRoom(roomId, 'message_deleted', { roomId, messageId, message });
+    const message = await this.messages.softDeleteMessage(
+      messageId,
+      req.user.sub,
+    );
+    this.gateway.emitToRoom(roomId, 'message_deleted', {
+      roomId,
+      messageId,
+      message,
+    });
     return { message };
   }
 
@@ -123,8 +154,17 @@ export class MessagesController {
     const roomId = room._id.toString();
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a room member');
-    const reactions = await this.messages.addReaction(roomId, messageId, req.user.sub, body.emoji);
-    this.gateway.emitToRoom(roomId, 'message_reactions', { roomId, messageId, reactions });
+    const reactions = await this.messages.addReaction(
+      roomId,
+      messageId,
+      req.user.sub,
+      body.emoji,
+    );
+    this.gateway.emitToRoom(roomId, 'message_reactions', {
+      roomId,
+      messageId,
+      reactions,
+    });
     return { reactions };
   }
 
@@ -140,8 +180,16 @@ export class MessagesController {
     const roomId = room._id.toString();
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a room member');
-    const reactions = await this.messages.removeReaction(messageId, req.user.sub, emoji);
-    this.gateway.emitToRoom(roomId, 'message_reactions', { roomId, messageId, reactions });
+    const reactions = await this.messages.removeReaction(
+      messageId,
+      req.user.sub,
+      emoji,
+    );
+    this.gateway.emitToRoom(roomId, 'message_reactions', {
+      roomId,
+      messageId,
+      reactions,
+    });
     return { reactions };
   }
 
@@ -172,7 +220,11 @@ export class MessagesController {
     const roomId = room._id.toString();
     const isMember = await this.rooms.isMember(roomId, req.user.sub);
     if (!isMember) throw new ForbiddenException('Not a room member');
-    const items = await this.messages.getThread(roomId, messageId, Number(limit || '100'));
+    const items = await this.messages.getThread(
+      roomId,
+      messageId,
+      Number(limit || '100'),
+    );
     return { items };
   }
 
@@ -195,12 +247,19 @@ export class MessagesController {
       type: 'text',
       parentId: messageId as any,
     });
-    this.gateway.emitToRoom(roomId, 'thread_reply', { roomId, parentId: messageId, message });
+    this.gateway.emitToRoom(roomId, 'thread_reply', {
+      roomId,
+      parentId: messageId,
+      message,
+    });
     return { message };
   }
 
   @Get('search-placeholder')
   async searchPlaceholder() {
-    return { enabled: false, hint: 'Full text search ranking can be added later.' };
+    return {
+      enabled: false,
+      hint: 'Full text search ranking can be added later.',
+    };
   }
 }

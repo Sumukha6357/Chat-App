@@ -25,7 +25,7 @@ export default function SettingsPage() {
     listNotificationSettings()
       .then((rows) => {
         const map: Record<string, { level: 'all' | 'mentions' | 'none'; quietHoursEnabled: boolean }> = {};
-        rows.forEach((r: any) => {
+        rows.forEach((r) => {
           map[r.roomId] = { level: r.level, quietHoursEnabled: Boolean(r.quietHoursEnabled) };
         });
         setNotificationSettings(map);
@@ -33,7 +33,7 @@ export default function SettingsPage() {
       .catch(() => null);
   }, []);
 
-  const saveAppearance = async (patch: any) => {
+  const saveAppearance = async (patch: { theme?: 'dark' | 'light' | 'midnight'; density?: 'compact' | 'comfortable' | 'cozy'; fontSize?: 'sm' | 'md' | 'lg'; sidebarCollapsed?: boolean }) => {
     await patchPreferences(patch).catch(() => null);
   };
 

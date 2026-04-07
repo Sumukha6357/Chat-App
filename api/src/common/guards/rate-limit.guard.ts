@@ -25,7 +25,10 @@ export class RateLimitGuard implements CanActivate {
       await this.rateLimit.consume(key);
       return true;
     } catch {
-      throw new HttpException('Rate limit exceeded', HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException(
+        'Rate limit exceeded',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
   }
 }

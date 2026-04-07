@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Put, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Put,
+  Req,
+} from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
 import { PreferencesService } from './preferences.service';
 
@@ -49,13 +58,21 @@ export class PreferencesController {
 
   @Get('me/workspace-order')
   async getWorkspaceOrder(@Req() req: any) {
-    return { workspaceOrder: await this.preferences.getWorkspaceOrder(req.user.sub) };
+    return {
+      workspaceOrder: await this.preferences.getWorkspaceOrder(req.user.sub),
+    };
   }
 
   @Put('me/workspace-order')
-  async setWorkspaceOrder(@Req() req: any, @Body() body: { workspaceOrder: string[] }) {
+  async setWorkspaceOrder(
+    @Req() req: any,
+    @Body() body: { workspaceOrder: string[] },
+  ) {
     return {
-      workspaceOrder: await this.preferences.setWorkspaceOrder(req.user.sub, body.workspaceOrder || []),
+      workspaceOrder: await this.preferences.setWorkspaceOrder(
+        req.user.sub,
+        body.workspaceOrder || [],
+      ),
     };
   }
 
@@ -79,12 +96,16 @@ export class PreferencesController {
 
   @Put('me/favorites/:roomId')
   async addFavorite(@Req() req: any, @Param('roomId') roomId: string) {
-    return { roomIds: await this.preferences.addFavorite(req.user.sub, roomId) };
+    return {
+      roomIds: await this.preferences.addFavorite(req.user.sub, roomId),
+    };
   }
 
   @Delete('me/favorites/:roomId')
   async removeFavorite(@Req() req: any, @Param('roomId') roomId: string) {
-    return { roomIds: await this.preferences.removeFavorite(req.user.sub, roomId) };
+    return {
+      roomIds: await this.preferences.removeFavorite(req.user.sub, roomId),
+    };
   }
 
   @Get('drafts')
@@ -98,8 +119,16 @@ export class PreferencesController {
   }
 
   @Put('drafts/:roomId')
-  upsertDraft(@Req() req: any, @Param('roomId') roomId: string, @Body() body: { content: string }) {
-    return this.preferences.upsertDraft(req.user.sub, roomId, body.content || '');
+  upsertDraft(
+    @Req() req: any,
+    @Param('roomId') roomId: string,
+    @Body() body: { content: string },
+  ) {
+    return this.preferences.upsertDraft(
+      req.user.sub,
+      roomId,
+      body.content || '',
+    );
   }
 
   @Get('notification-settings')
@@ -111,7 +140,8 @@ export class PreferencesController {
   setNotificationSetting(
     @Req() req: any,
     @Param('roomId') roomId: string,
-    @Body() body: { level: 'all' | 'mentions' | 'none'; quietHoursEnabled?: boolean },
+    @Body()
+    body: { level: 'all' | 'mentions' | 'none'; quietHoursEnabled?: boolean },
   ) {
     return this.preferences.setNotificationSetting(
       req.user.sub,
@@ -121,4 +151,3 @@ export class PreferencesController {
     );
   }
 }
-

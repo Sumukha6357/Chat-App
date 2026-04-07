@@ -2,8 +2,14 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PreferencesController } from './preferences.controller';
 import { PreferencesService } from './preferences.service';
-import { UserPreferences, UserPreferencesSchema } from './schemas/user-preferences.schema';
-import { UserSidebarState, UserSidebarStateSchema } from './schemas/user-sidebar-state.schema';
+import {
+  UserPreferences,
+  UserPreferencesSchema,
+} from './schemas/user-preferences.schema';
+import {
+  UserSidebarState,
+  UserSidebarStateSchema,
+} from './schemas/user-sidebar-state.schema';
 import {
   UserChannelFavorite,
   UserChannelFavoriteSchema,
@@ -12,8 +18,14 @@ import {
   UserWorkspaceOrder,
   UserWorkspaceOrderSchema,
 } from './schemas/user-workspace-order.schema';
-import { UserLastState, UserLastStateSchema } from './schemas/user-last-state.schema';
-import { UserChannelDraft, UserChannelDraftSchema } from './schemas/user-channel-draft.schema';
+import {
+  UserLastState,
+  UserLastStateSchema,
+} from './schemas/user-last-state.schema';
+import {
+  UserChannelDraft,
+  UserChannelDraftSchema,
+} from './schemas/user-channel-draft.schema';
 import {
   UserChannelNotificationSetting,
   UserChannelNotificationSettingSchema,
@@ -28,7 +40,10 @@ import {
       { name: UserWorkspaceOrder.name, schema: UserWorkspaceOrderSchema },
       { name: UserLastState.name, schema: UserLastStateSchema },
       { name: UserChannelDraft.name, schema: UserChannelDraftSchema },
-      { name: UserChannelNotificationSetting.name, schema: UserChannelNotificationSettingSchema },
+      {
+        name: UserChannelNotificationSetting.name,
+        schema: UserChannelNotificationSettingSchema,
+      },
     ]),
   ],
   controllers: [PreferencesController],
@@ -36,4 +51,3 @@ import {
   exports: [PreferencesService],
 })
 export class PreferencesModule {}
-

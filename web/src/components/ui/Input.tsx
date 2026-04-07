@@ -19,14 +19,14 @@ export function Input({ label, error, className = '', ...props }: InputProps) {
           bg-[var(--color-surface)] px-4 py-2.5 text-sm 
           transition-all duration-200 shadow-sm
           placeholder:text-[var(--color-text-muted)]/70
-          focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]
-          disabled:bg-[var(--color-surface-2)] disabled:cursor-not-allowed
-          ${error ? 'border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20 focus:border-[var(--color-danger)]' : ''}
+          focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/20 focus-visible:border-[var(--color-primary)]
+          disabled:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50
+          ${error ? 'border-[var(--color-danger)] focus:ring-[var(--color-danger)]/20 focus:border-[var(--color-danger)] focus-visible:ring-[var(--color-danger)]/20 focus-visible:border-[var(--color-danger)]' : ''}
           ${className}
         `}
         {...props}
       />
-      {error && <span className="text-[10px] text-[var(--color-danger)] font-bold px-1">{error}</span>}
+      {error && <span className="text-[10px] text-[var(--color-danger)] font-bold px-1 mt-1" role="alert">{error}</span>}
     </div>
   );
 }

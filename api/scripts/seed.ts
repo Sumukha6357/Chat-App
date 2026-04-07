@@ -8,6 +8,12 @@ import { Notification, NotificationSchema } from '../src/notifications/schemas/n
 
 dotenv.config();
 
+const TITANIUM_USERS = [
+  { email: 'admin@gmail.com', username: 'admin', roles: ['admin'] },
+  { email: 'moderator@gmail.com', username: 'moderator', roles: ['moderator'] },
+  { email: 'user@gmail.com', username: 'user', roles: ['user'] },
+];
+
 const USER_A = {
   email: 'userA@example.com',
   username: 'userA',
@@ -33,6 +39,10 @@ async function main() {
     mongoose.models.Notification ||
     mongoose.model<Notification>(Notification.name, NotificationSchema);
 
+  for (const tUser of TITANIUM_USERS) {
+    await upsertUser(UserModel, { ...tUser, password: 'password' });
+  }
+
   const userA = await upsertUser(UserModel, USER_A);
   const userB = await upsertUser(UserModel, USER_B);
 
@@ -49,7 +59,7 @@ async function main() {
   console.log('Seed complete');
 }
 
-async function upsertUser(model: mongoose.Model<User>, data: typeof USER_A) {
+async function upsertUser(model: mongoose.Model<User>, data: any) {
   const existing = await model.findOne({ email: data.email });
   if (existing) return existing;
   const passwordHash = await hash(data.password, 12);
@@ -57,7 +67,7 @@ async function upsertUser(model: mongoose.Model<User>, data: typeof USER_A) {
     email: data.email,
     username: data.username,
     passwordHash,
-    roles: ['user'],
+    roles: data.roles || ['user'],
   });
 }
 

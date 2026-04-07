@@ -16,6 +16,7 @@ const readStorage = () => {
   const refreshToken = window.localStorage.getItem('refreshToken') || undefined;
   const userId = window.localStorage.getItem('userId') || undefined;
   const username = window.localStorage.getItem('username') || undefined;
+  console.log('Auth state from storage:', { accessToken: !!accessToken, refreshToken: !!refreshToken, userId, username });
   return { accessToken, refreshToken, userId, username };
 };
 

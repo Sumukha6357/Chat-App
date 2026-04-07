@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/store/authStore';
+import { Room } from '@/store/chatStore';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
 interface ApiOptions {
   method?: string;
@@ -10,31 +11,60 @@ interface ApiOptions {
 
 export async function apiRequest<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = false } = options;
+  console.log(`API Request: ${method} ${path}`, { body, auth });
+  
   const headers: Record<string, string> = { 'content-type': 'application/json' };
 
   if (auth) {
     const token = useAuthStore.getState().accessToken;
     if (token) headers.authorization = `Bearer ${token}`;
+    else {
+      console.log('No auth token available');
+      return Promise.reject(new Error('No authentication token'));
+    }
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const url = `${API_URL}${path}`;
+  console.log('Full URL:', url);
+  console.log('Headers:', headers);
 
-  if (res.status === 401 && auth) {
-    const refreshed = await refreshToken();
-    if (refreshed) return apiRequest<T>(path, options);
+  try {
+    console.log('Sending fetch request...');
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    console.log(`API Response: ${method} ${path}`, response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error: ${method} ${path}`, response.status, errorText);
+      
+      // Don't throw errors for drafts, just return null
+      if (path.includes('/drafts')) {
+        console.log('Ignoring drafts API error');
+        return null as T;
+      }
+      
+      throw new Error(errorText || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`API Success: ${method} ${path}`, data);
+    return data;
+  } catch (error) {
+    console.error(`API Request Failed: ${method} ${path}`, error);
+    
+    // Don't throw errors for drafts, just return null
+    if (path.includes('/drafts')) {
+      console.log('Ignoring drafts API error');
+      return null as T;
+    }
+    
+    throw error;
   }
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(err.message || 'Request failed');
-  }
-
-  const json = await res.json();
-  return (json && typeof json === 'object' && 'data' in json ? json.data : json) as T;
 }
 
 export async function refreshToken(): Promise<boolean> {
@@ -84,7 +114,8 @@ export async function fetchUsersPresence(ids: string[]) {
 }
 
 export async function searchRooms(q: string) {
-  return apiRequest<any[]>(`/rooms/search?q=${encodeURIComponent(q)}`, { auth: true });
+  const data = await apiRequest<Array<{ _id: string; name: string; type: string }>>(`/rooms/search?q=${encodeURIComponent(q)}`, { auth: true });
+  return data.map((r): Room => ({ _id: r._id, name: r.name, type: r.type as 'direct' | 'group', members: [] }));
 }
 
 export async function searchRoomMessages(
@@ -98,7 +129,7 @@ export async function searchRoomMessages(
   params.set('limit', String(limit));
   if (cursor?.id) params.set('cursorId', cursor.id);
   if (cursor?.createdAt) params.set('cursorCreatedAt', cursor.createdAt);
-  return apiRequest<{ items: any[]; nextCursor: any }>(
+  return apiRequest<{ items: Array<{ _id: string; content: string; createdAt: string }>; nextCursor: { id?: string; createdAt?: string } }>(
     `/rooms/${roomId}/messages/search?${params.toString()}`,
     { auth: true },
   );
@@ -228,10 +259,16 @@ export async function listDrafts() {
 }
 
 export async function getDraft(roomId: string) {
+  if (!roomId || roomId === 'new' || roomId === 'undefined') {
+    return Promise.resolve(null);
+  }
   return apiRequest<{ roomId: string; content: string } | null>(`/drafts/${roomId}`, { auth: true });
 }
 
 export async function upsertDraft(roomId: string, content: string) {
+  if (!roomId || roomId === 'new' || roomId === 'undefined') {
+    return Promise.resolve(null);
+  }
   return apiRequest(`/drafts/${roomId}`, {
     method: 'PUT',
     auth: true,
@@ -259,7 +296,7 @@ export async function setNotificationSetting(
 }
 
 export async function editMessage(roomId: string, messageId: string, content: string) {
-  return apiRequest<{ message: any }>(`/rooms/${roomId}/messages/${messageId}`, {
+  return apiRequest<{ message: { _id: string; content: string; updatedAt: string } }>(`/rooms/${roomId}/messages/${messageId}`, {
     method: 'PATCH',
     auth: true,
     body: { content },
@@ -267,7 +304,7 @@ export async function editMessage(roomId: string, messageId: string, content: st
 }
 
 export async function deleteMessage(roomId: string, messageId: string) {
-  return apiRequest<{ message: any }>(`/rooms/${roomId}/messages/${messageId}`, {
+  return apiRequest<{ message: { _id: string; deletedAt: string } }>(`/rooms/${roomId}/messages/${messageId}`, {
     method: 'DELETE',
     auth: true,
   });
@@ -302,11 +339,11 @@ export async function listMessageReactions(roomId: string, messageId: string) {
 }
 
 export async function fetchThread(roomId: string, messageId: string) {
-  return apiRequest<{ items: any[] }>(`/rooms/${roomId}/messages/${messageId}/thread`, { auth: true });
+  return apiRequest<{ items: Array<{ _id: string; content: string; createdAt: string; userId: string }> }>(`/rooms/${roomId}/messages/${messageId}/thread`, { auth: true });
 }
 
 export async function replyInThread(roomId: string, messageId: string, content: string) {
-  return apiRequest<{ message: any }>(`/rooms/${roomId}/messages/${messageId}/thread`, {
+  return apiRequest<{ message: { _id: string; content: string; createdAt: string } }>(`/rooms/${roomId}/messages/${messageId}/thread`, {
     method: 'POST',
     auth: true,
     body: { content },

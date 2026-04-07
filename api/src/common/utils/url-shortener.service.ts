@@ -9,7 +9,11 @@ interface ShortenResponse {
 export class UrlShortenerService {
   constructor(private readonly config: ConfigService) {}
 
-  async shorten(originalUrl: string, customAlias?: string, expiresAt?: string): Promise<string> {
+  async shorten(
+    originalUrl: string,
+    customAlias?: string,
+    expiresAt?: string,
+  ): Promise<string> {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -19,15 +23,18 @@ export class UrlShortenerService {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${this.config.get('shortenerBaseUrl')}/api/v1/urls`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          originalUrl,
-          customAlias,
-          expiresAt,
-        }),
-      });
+      const response = await fetch(
+        `${this.config.get('shortenerBaseUrl')}/api/v1/urls`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            originalUrl,
+            customAlias,
+            expiresAt,
+          }),
+        },
+      );
       if (!response.ok) {
         return originalUrl;
       }

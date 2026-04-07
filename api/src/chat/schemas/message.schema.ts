@@ -24,7 +24,11 @@ export class Message {
   @Prop({ default: '' })
   content!: string;
 
-  @Prop({ required: true, enum: ['text', 'image', 'file', 'system'], default: 'text' })
+  @Prop({
+    required: true,
+    enum: ['text', 'image', 'file', 'system'],
+    default: 'text',
+  })
   type!: 'text' | 'image' | 'file' | 'system';
 
   @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
@@ -72,6 +76,9 @@ MessageSchema.index({ roomId: 1, parentId: 1, createdAt: 1 });
 MessageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 MessageSchema.index(
   { roomId: 1, senderId: 1, clientMessageId: 1 },
-  { unique: true, partialFilterExpression: { clientMessageId: { $exists: true } } },
+  {
+    unique: true,
+    partialFilterExpression: { clientMessageId: { $exists: true } },
+  },
 );
 MessageSchema.index({ content: 'text' });

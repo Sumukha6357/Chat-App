@@ -1,9 +1,18 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message, MessageDocument } from '../schemas/message.schema';
-import { MessageReaction, MessageReactionDocument } from '../schemas/message-reaction.schema';
-import { MessageEdit, MessageEditDocument } from '../schemas/message-edit.schema';
-import { MessageMention, MessageMentionDocument } from '../schemas/message-mention.schema';
+import {
+  MessageReaction,
+  MessageReactionDocument,
+} from '../schemas/message-reaction.schema';
+import {
+  MessageEdit,
+  MessageEditDocument,
+} from '../schemas/message-edit.schema';
+import {
+  MessageMention,
+  MessageMentionDocument,
+} from '../schemas/message-mention.schema';
 
 export interface MessageCursor {
   createdAt: Date;
@@ -12,18 +21,28 @@ export interface MessageCursor {
 
 export class MessagesRepository {
   constructor(
-    @InjectModel(Message.name) private readonly messageModel: Model<MessageDocument>,
+    @InjectModel(Message.name)
+    private readonly messageModel: Model<MessageDocument>,
     @InjectModel(MessageReaction.name)
     private readonly reactionModel: Model<MessageReactionDocument>,
-    @InjectModel(MessageEdit.name) private readonly editModel: Model<MessageEditDocument>,
-    @InjectModel(MessageMention.name) private readonly mentionModel: Model<MessageMentionDocument>,
+    @InjectModel(MessageEdit.name)
+    private readonly editModel: Model<MessageEditDocument>,
+    @InjectModel(MessageMention.name)
+    private readonly mentionModel: Model<MessageMentionDocument>,
   ) {}
 
   create(data: Partial<Message>) {
-    return this.messageModel.create(data);
+    console.log('Repository: Creating message with data:', data);
+    const result = this.messageModel.create(data);
+    console.log('Repository: Message create operation initiated');
+    return result;
   }
 
-  findByClientMessageId(roomId: string, senderId: string, clientMessageId: string) {
+  findByClientMessageId(
+    roomId: string,
+    senderId: string,
+    clientMessageId: string,
+  ) {
     return this.messageModel
       .findOne({
         roomId: new Types.ObjectId(roomId),
@@ -34,12 +53,15 @@ export class MessagesRepository {
   }
 
   async findByRoom(roomId: string, limit: number, cursor?: MessageCursor) {
-    const query: Record<string, unknown> = { roomId: new Types.ObjectId(roomId) };
+    const query: Record<string, any> = { roomId };
 
     if (cursor) {
       query.$or = [
         { createdAt: { $lt: cursor.createdAt } },
-        { createdAt: cursor.createdAt, _id: { $lt: new Types.ObjectId(cursor.id) } },
+        {
+          createdAt: cursor.createdAt,
+          _id: { $lt: new Types.ObjectId(cursor.id) },
+        },
       ];
     }
 
@@ -50,7 +72,12 @@ export class MessagesRepository {
       .lean();
   }
 
-  async searchByRoom(roomId: string, term: string, limit: number, cursor?: MessageCursor) {
+  async searchByRoom(
+    roomId: string,
+    term: string,
+    limit: number,
+    cursor?: MessageCursor,
+  ) {
     const query: Record<string, unknown> = {
       roomId: new Types.ObjectId(roomId),
       content: { $regex: term, $options: 'i' },
@@ -58,7 +85,10 @@ export class MessagesRepository {
     if (cursor) {
       query.$or = [
         { createdAt: { $lt: cursor.createdAt } },
-        { createdAt: cursor.createdAt, _id: { $lt: new Types.ObjectId(cursor.id) } },
+        {
+          createdAt: cursor.createdAt,
+          _id: { $lt: new Types.ObjectId(cursor.id) },
+        },
       ];
     }
     return this.messageModel
@@ -103,11 +133,20 @@ export class MessagesRepository {
 
   updateMessage(messageId: string, patch: Partial<Message>) {
     return this.messageModel
-      .findByIdAndUpdate(new Types.ObjectId(messageId), { $set: patch }, { new: true })
+      .findByIdAndUpdate(
+        new Types.ObjectId(messageId),
+        { $set: patch },
+        { new: true },
+      )
       .lean();
   }
 
-  async appendEdit(messageId: string, editedBy: string, previousContent: string, newContent: string) {
+  async appendEdit(
+    messageId: string,
+    editedBy: string,
+    previousContent: string,
+    newContent: string,
+  ) {
     return this.editModel.create({
       messageId: new Types.ObjectId(messageId),
       editedBy: new Types.ObjectId(editedBy),
@@ -116,7 +155,12 @@ export class MessagesRepository {
     });
   }
 
-  async addReaction(roomId: string, messageId: string, userId: string, emoji: string) {
+  async addReaction(
+    roomId: string,
+    messageId: string,
+    userId: string,
+    emoji: string,
+  ) {
     await this.reactionModel.updateOne(
       {
         messageId: new Types.ObjectId(messageId),
@@ -146,8 +190,13 @@ export class MessagesRepository {
   }
 
   async listReactions(messageId: string) {
-    const rows = await this.reactionModel.find({ messageId: new Types.ObjectId(messageId) }).lean();
-    const grouped = new Map<string, { emoji: string; count: number; userIds: string[] }>();
+    const rows = await this.reactionModel
+      .find({ messageId: new Types.ObjectId(messageId) })
+      .lean();
+    const grouped = new Map<
+      string,
+      { emoji: string; count: number; userIds: string[] }
+    >();
     rows.forEach((r) => {
       const key = r.emoji;
       if (!grouped.has(key)) {
@@ -185,6 +234,8 @@ export class MessagesRepository {
       targetType: m.targetType,
       targetId: m.targetId,
     }));
-    await this.mentionModel.insertMany(docs, { ordered: false }).catch(() => null);
+    await this.mentionModel
+      .insertMany(docs, { ordered: false })
+      .catch(() => null);
   }
 }

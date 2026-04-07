@@ -1,6 +1,9 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Notification, NotificationDocument } from './schemas/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from './schemas/notification.schema';
 
 export class NotificationsRepository {
   constructor(
@@ -21,6 +24,9 @@ export class NotificationsRepository {
   }
 
   markRead(userId: string, ids: string[]) {
-    return this.notificationModel.updateMany({ userId, _id: { $in: ids } }, { read: true });
+    return this.notificationModel.updateMany(
+      { userId, _id: { $in: ids } },
+      { read: true },
+    );
   }
 }

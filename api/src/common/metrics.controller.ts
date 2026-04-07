@@ -8,7 +8,7 @@ import { IgnoreEnvelope } from './decorators/ignore-envelope.decorator';
 @Public()
 @IgnoreEnvelope()
 export class MetricsController {
-  constructor(private readonly metrics: MetricsService) { }
+  constructor(private readonly metrics: MetricsService) {}
 
   @Get()
   async getMetrics() {

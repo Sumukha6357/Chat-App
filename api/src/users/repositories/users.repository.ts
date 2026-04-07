@@ -3,7 +3,9 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
 
 export class UsersRepository {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+  ) {}
 
   create(data: Partial<User>) {
     return this.userModel.create(data);

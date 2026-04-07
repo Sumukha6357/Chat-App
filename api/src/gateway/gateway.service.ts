@@ -20,6 +20,8 @@ export class GatewayService {
   async emitNotificationToUser(userId: string, payload: unknown) {
     if (!this.server) return;
     const sockets = await this.presence.getUserSockets(userId);
-    sockets.forEach((socketId) => this.server?.to(socketId).emit('notification', payload));
+    sockets.forEach((socketId) =>
+      this.server?.to(socketId).emit('notification', payload),
+    );
   }
 }

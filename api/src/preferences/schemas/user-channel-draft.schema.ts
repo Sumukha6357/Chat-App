@@ -17,6 +17,6 @@ export class UserChannelDraft {
   content!: string;
 }
 
-export const UserChannelDraftSchema = SchemaFactory.createForClass(UserChannelDraft);
+export const UserChannelDraftSchema =
+  SchemaFactory.createForClass(UserChannelDraft);
 UserChannelDraftSchema.index({ userId: 1, roomId: 1 }, { unique: true });
-

@@ -5,9 +5,11 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) { }
+  constructor(private reflector: Reflector) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
     if (context.getType() !== 'http') {
       return true;
     }
@@ -20,12 +22,11 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    console.log(`[RolesGuard] url=${url} isPublic=${isPublic} handler=${context.getHandler().name} class=${context.getClass().name}`);
+    console.log(
+      `[RolesGuard] url=${url} isPublic=${isPublic} handler=${context.getHandler().name} class=${context.getClass().name}`,
+    );
 
-    if (
-      url.toLowerCase().includes('auth') ||
-      isPublic
-    ) {
+    if (url.toLowerCase().includes('auth') || isPublic) {
       console.log(`[RolesGuard] BYPASSING`);
       return true;
     }

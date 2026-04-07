@@ -27,4 +27,4 @@ import { WsJwtGuard } from '../auth/guards/ws-jwt.guard';
   providers: [ChatGateway, GatewayService, WsJwtGuard],
   exports: [GatewayService],
 })
-export class GatewayModule { }
+export class GatewayModule {}

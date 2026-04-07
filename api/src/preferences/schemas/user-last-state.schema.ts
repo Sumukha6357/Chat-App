@@ -7,7 +7,13 @@ export type UserLastStateDocument = HydratedDocument<UserLastState>;
 export class UserLastState {
   _id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  })
   userId!: Types.ObjectId;
 
   @Prop()
@@ -18,4 +24,3 @@ export class UserLastState {
 }
 
 export const UserLastStateSchema = SchemaFactory.createForClass(UserLastState);
-

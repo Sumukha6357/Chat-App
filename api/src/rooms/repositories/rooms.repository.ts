@@ -3,10 +3,15 @@ import { Model, Types } from 'mongoose';
 import { Room, RoomDocument } from '../schemas/room.schema';
 
 export class RoomsRepository {
-  constructor(@InjectModel(Room.name) private readonly roomModel: Model<RoomDocument>) { }
+  constructor(
+    @InjectModel(Room.name) private readonly roomModel: Model<RoomDocument>,
+  ) {}
 
   create(data: Partial<Room>) {
-    return this.roomModel.create(data);
+    console.log('Rooms Repository: Creating room with data:', data);
+    const result = this.roomModel.create(data);
+    console.log('Rooms Repository: Room create operation initiated');
+    return result;
   }
 
   findById(id: string) {
@@ -37,8 +42,13 @@ export class RoomsRepository {
   }
 
   addMember(roomId: string, userId: string) {
-    const member = Types.ObjectId.isValid(userId) ? new Types.ObjectId(userId) : userId;
-    return this.roomModel.updateOne({ _id: roomId }, { $addToSet: { members: member } });
+    const member = Types.ObjectId.isValid(userId)
+      ? new Types.ObjectId(userId)
+      : userId;
+    return this.roomModel.updateOne(
+      { _id: roomId },
+      { $addToSet: { members: member } },
+    );
   }
 
   removeMember(roomId: string, userId: string) {
@@ -46,7 +56,10 @@ export class RoomsRepository {
     if (Types.ObjectId.isValid(userId)) {
       ids.unshift(new Types.ObjectId(userId));
     }
-    return this.roomModel.updateOne({ _id: roomId }, { $pull: { members: { $in: ids } } });
+    return this.roomModel.updateOne(
+      { _id: roomId },
+      { $pull: { members: { $in: ids } } },
+    );
   }
 
   update(id: string, data: Partial<Room>) {

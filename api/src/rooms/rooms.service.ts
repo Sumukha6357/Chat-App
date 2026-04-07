@@ -12,19 +12,27 @@ export class RoomsService implements OnModuleInit {
     private readonly roomsRepo: RoomsRepository,
     @Inject(forwardRef(() => MessagesService))
     private readonly messages: MessagesService,
-    @InjectModel(RoomMember.name) private readonly roomMemberModel: Model<RoomMemberDocument>,
-  ) { }
+    @InjectModel(RoomMember.name)
+    private readonly roomMemberModel: Model<RoomMemberDocument>,
+  ) {}
 
   async onModuleInit() {
     // Migration: populate slugs for existing rooms
     const allRooms = await this.roomsRepo.findAll();
     for (const room of allRooms as any[]) {
       if (!room.slug) {
-        const baseSlug = (room.name || 'room').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const baseSlug = (room.name || 'room')
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '');
         let slug = baseSlug || 'room';
         let count = 0;
         let finalSlug = slug;
-        while (await this.roomsRepo.findByIdOrSlug(count > 0 ? `${slug}-${count}` : slug)) {
+        while (
+          await this.roomsRepo.findByIdOrSlug(
+            count > 0 ? `${slug}-${count}` : slug,
+          )
+        ) {
           count++;
           finalSlug = `${slug}-${count}`;
         }
@@ -34,16 +42,26 @@ export class RoomsService implements OnModuleInit {
   }
 
   async createRoom(data: Partial<Room>) {
+    console.log('Creating room in database:', data);
     if (data.name && !data.slug) {
-      const baseSlug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const baseSlug = data.name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
       let slug = baseSlug || 'room';
       let count = 0;
-      while (await this.roomsRepo.findByIdOrSlug(count > 0 ? `${slug}-${count}` : slug)) {
+      while (
+        await this.roomsRepo.findByIdOrSlug(
+          count > 0 ? `${slug}-${count}` : slug,
+        )
+      ) {
         count++;
       }
       data.slug = count > 0 ? `${slug}-${count}` : slug;
     }
-    return this.roomsRepo.create(data);
+    const room = await this.roomsRepo.create(data);
+    console.log('Room created successfully:', room);
+    return room;
   }
 
   findById(id: string) {
@@ -82,7 +100,10 @@ export class RoomsService implements OnModuleInit {
       update.lastReadAt = new Date(lastReadAt);
     }
     return this.roomMemberModel.updateOne(
-      { roomId: new Types.ObjectId(roomId), userId: new Types.ObjectId(userId) },
+      {
+        roomId: new Types.ObjectId(roomId),
+        userId: new Types.ObjectId(userId),
+      },
       { $set: update },
       { upsert: true },
     );

@@ -74,9 +74,18 @@ export class PresenceService {
       await this.redis.sadd(this.roomSocketsKey(roomId), socketId);
       await this.redis.sadd(this.roomUserSocketsKey(roomId, userId), socketId);
       await this.redis.sadd(this.socketRoomsKey(socketId), roomId);
-      await this.redis.expire(this.roomUserSocketsKey(roomId, userId), SOCKET_SET_TTL_SECONDS);
-      await this.redis.expire(this.roomSocketsKey(roomId), SOCKET_SET_TTL_SECONDS);
-      await this.redis.expire(this.socketRoomsKey(socketId), SOCKET_SET_TTL_SECONDS);
+      await this.redis.expire(
+        this.roomUserSocketsKey(roomId, userId),
+        SOCKET_SET_TTL_SECONDS,
+      );
+      await this.redis.expire(
+        this.roomSocketsKey(roomId),
+        SOCKET_SET_TTL_SECONDS,
+      );
+      await this.redis.expire(
+        this.socketRoomsKey(socketId),
+        SOCKET_SET_TTL_SECONDS,
+      );
     }
     await this.redis.sadd(this.roomUsersKey(roomId), userId);
     await this.redis.expire(this.roomUsersKey(roomId), SOCKET_SET_TTL_SECONDS);
@@ -87,7 +96,9 @@ export class PresenceService {
       await this.redis.srem(this.roomSocketsKey(roomId), socketId);
       await this.redis.srem(this.roomUserSocketsKey(roomId, userId), socketId);
       await this.redis.srem(this.socketRoomsKey(socketId), roomId);
-      const remaining = await this.redis.scard(this.roomUserSocketsKey(roomId, userId));
+      const remaining = await this.redis.scard(
+        this.roomUserSocketsKey(roomId, userId),
+      );
       if (remaining === 0) {
         await this.redis.srem(this.roomUsersKey(roomId), userId);
       }
@@ -180,9 +191,14 @@ export class PresenceService {
     const pipeline = this.redis.pipeline();
     userIds.forEach((id) => pipeline.hgetall(this.userPresenceKey(id)));
     const results = await pipeline.exec();
-    const map: Record<string, { status: 'online' | 'offline' | 'away'; lastSeenAt?: string }> = {};
+    const map: Record<
+      string,
+      { status: 'online' | 'offline' | 'away'; lastSeenAt?: string }
+    > = {};
     results?.forEach(([, value], idx) => {
-      const data = value as { status?: string; lastSeenAt?: string } | undefined;
+      const data = value as
+        | { status?: string; lastSeenAt?: string }
+        | undefined;
       if (data && Object.keys(data).length > 0) {
         map[userIds[idx]] = {
           status: data.status as 'online' | 'offline' | 'away',

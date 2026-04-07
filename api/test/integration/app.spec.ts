@@ -40,10 +40,14 @@ describe('Integration', () => {
         const val = redisStore.get(key);
         return val !== undefined ? val : null;
       }),
-      set: jest.fn().mockImplementation(async (key: string, val: string, ...args: any[]) => {
-        redisStore.set(key, val);
-        return 'OK';
-      }),
+      set: jest
+        .fn()
+        .mockImplementation(
+          async (key: string, val: string, ...args: any[]) => {
+            redisStore.set(key, val);
+            return 'OK';
+          },
+        ),
       incr: jest.fn().mockImplementation(async (key) => {
         const val = parseInt(redisStore.get(key) || '0', 10) + 1;
         redisStore.set(key, String(val));
@@ -81,7 +85,9 @@ describe('Integration', () => {
       onModuleInit: jest.fn(),
       onModuleDestroy: jest.fn(),
       getQueue: jest.fn().mockReturnValue({
-        getJobCounts: jest.fn().mockResolvedValue({ waiting: 0, active: 0, completed: 0 }),
+        getJobCounts: jest
+          .fn()
+          .mockResolvedValue({ waiting: 0, active: 0, completed: 0 }),
         add: jest.fn().mockResolvedValue({ id: '1' }),
         on: jest.fn(),
         close: jest.fn(),
@@ -148,7 +154,11 @@ describe('Integration', () => {
     await teardown();
   });
 
-  const registerUser = async (email: string, username: string, password: string) => {
+  const registerUser = async (
+    email: string,
+    username: string,
+    password: string,
+  ) => {
     const res = await request(baseUrl)
       .post('/auth/register')
       .send({ email, username, password });
@@ -159,7 +169,9 @@ describe('Integration', () => {
   };
 
   const loginUser = async (email: string, password: string) => {
-    const res = await request(baseUrl).post('/auth/login').send({ email, password });
+    const res = await request(baseUrl)
+      .post('/auth/login')
+      .send({ email, password });
     return res.body.data || res.body;
   };
 
@@ -203,13 +215,19 @@ describe('Integration', () => {
   test('WebSocket: connect valid/invalid JWT, join, send, read receipt, presence', async () => {
     const user = await registerUser('b@test.com', 'userb', 'password123');
 
-    const invalid = io(`${baseUrl}/ws`, { auth: { token: 'bad' }, transports: ['websocket'] });
+    const invalid = io(`${baseUrl}/ws`, {
+      auth: { token: 'bad' },
+      transports: ['websocket'],
+    });
     await new Promise<void>((resolve) => {
       invalid.on('connect_error', () => resolve());
     });
     invalid.close();
 
-    const socket = io(`${baseUrl}/ws`, { auth: { token: user.accessToken }, transports: ['websocket'] });
+    const socket = io(`${baseUrl}/ws`, {
+      auth: { token: user.accessToken },
+      transports: ['websocket'],
+    });
     await new Promise<void>((resolve) => socket.on('connect', () => resolve()));
 
     const rooms = app.get(RoomsService);
@@ -223,7 +241,9 @@ describe('Integration', () => {
     });
 
     await new Promise<void>((resolve) => {
-      socket.emit('join_room', { roomId: room._id.toString() }, () => resolve());
+      socket.emit('join_room', { roomId: room._id.toString() }, () =>
+        resolve(),
+      );
     });
 
     const messages = app.get(MessagesService);
@@ -232,7 +252,10 @@ describe('Integration', () => {
         const persisted = await messages.findById(msg._id);
         resolve({ msg, persisted });
       });
-      socket.emit('send_message', { roomId: room._id.toString(), content: 'hello' });
+      socket.emit('send_message', {
+        roomId: room._id.toString(),
+        content: 'hello',
+      });
     });
 
     expect(received.msg).toBeDefined();
@@ -240,7 +263,10 @@ describe('Integration', () => {
 
     const read = await new Promise<any>((resolve) => {
       socket.on('read_receipt', (payload) => resolve(payload));
-      socket.emit('mark_read', { roomId: room._id.toString(), messageIds: [received.msg._id] });
+      socket.emit('mark_read', {
+        roomId: room._id.toString(),
+        messageIds: [received.msg._id],
+      });
     });
     expect(read.userId).toBeDefined();
 
@@ -268,23 +294,42 @@ describe('Integration', () => {
       createdBy: user1.userId as any,
     });
 
-    const socket1 = io(`${baseUrl}/ws`, { auth: { token: user1.accessToken }, transports: ['websocket'] });
-    await new Promise<void>((resolve) => socket1.on('connect', () => resolve()));
+    const socket1 = io(`${baseUrl}/ws`, {
+      auth: { token: user1.accessToken },
+      transports: ['websocket'],
+    });
+    await new Promise<void>((resolve) =>
+      socket1.on('connect', () => resolve()),
+    );
 
     const notifications = app.get(NotificationsService);
     await new Promise<void>((resolve) => {
-      socket1.emit('send_message', { roomId: room._id.toString(), content: 'ping' }, () => resolve());
+      socket1.emit(
+        'send_message',
+        { roomId: room._id.toString(), content: 'ping' },
+        () => resolve(),
+      );
     });
 
     const counts = await notifications.getQueue().getJobCounts();
-    expect(counts.waiting + counts.active + counts.completed).toBeGreaterThan(0);
+    expect(counts.waiting + counts.active + counts.completed).toBeGreaterThan(
+      0,
+    );
 
-    const socket2 = io(`${baseUrl}/ws`, { auth: { token: user2.accessToken }, transports: ['websocket'] });
-    await new Promise<void>((resolve) => socket2.on('connect', () => resolve()));
+    const socket2 = io(`${baseUrl}/ws`, {
+      auth: { token: user2.accessToken },
+      transports: ['websocket'],
+    });
+    await new Promise<void>((resolve) =>
+      socket2.on('connect', () => resolve()),
+    );
 
     const realtime = await new Promise<any>((resolve) => {
       socket2.on('notification', (payload) => resolve(payload));
-      socket1.emit('send_message', { roomId: room._id.toString(), content: 'ping2' });
+      socket1.emit('send_message', {
+        roomId: room._id.toString(),
+        content: 'ping2',
+      });
     });
     expect(realtime.type).toBeDefined();
 
@@ -297,7 +342,11 @@ describe('Integration', () => {
   });
 
   test('Preferences + message interactions persist', async () => {
-    const user = await registerUser('prefs@test.com', 'prefuser', 'password123');
+    const user = await registerUser(
+      'prefs@test.com',
+      'prefuser',
+      'password123',
+    );
     const token = user.accessToken;
     const roomsService = app.get(RoomsService);
     const room = await roomsService.createRoom({
@@ -314,7 +363,12 @@ describe('Integration', () => {
     const prefRes = await request(baseUrl)
       .patch('/me/preferences')
       .set('authorization', `Bearer ${token}`)
-      .send({ theme: 'midnight', density: 'compact', fontSize: 'lg', sidebarCollapsed: true });
+      .send({
+        theme: 'midnight',
+        density: 'compact',
+        fontSize: 'lg',
+        sidebarCollapsed: true,
+      });
     expect(prefRes.status).toBe(200);
     expect(prefRes.body.data.theme).toBe('midnight');
 

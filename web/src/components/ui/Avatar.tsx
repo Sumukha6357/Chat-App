@@ -19,12 +19,14 @@ export function Avatar({ name, src, size = 40, status, className = '' }: AvatarP
     <div
       className={`relative inline-flex items-center justify-center shrink-0 w-max ${className}`}
       style={{ width: size, height: size }}
+      role="img"
+      aria-label={name}
     >
-      <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--color-primary)] text-white font-bold text-sm overflow-hidden border-2 border-[var(--color-surface)] shadow-md">
+      <div className="flex h-full w-full items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-text-on-primary)] font-bold text-sm overflow-hidden border-2 border-[var(--color-surface)] shadow-md">
         {src ? (
           <img src={src} alt={name} className="h-full w-full object-cover" />
         ) : (
-          initials
+          <span className="select-none">{initials}</span>
         )}
       </div>
       {status && (
@@ -35,6 +37,8 @@ export function Avatar({ name, src, size = 40, status, className = '' }: AvatarP
             ${status === 'away' ? 'bg-[var(--color-warning)]' : ''}
             ${status === 'offline' ? 'bg-[var(--color-text-muted)]' : ''}
           `}
+          role="presentation"
+          aria-label={`Status: ${status}`}
         />
       )}
     </div>

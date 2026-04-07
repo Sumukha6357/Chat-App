@@ -1,15 +1,22 @@
+// Legacy theme file - kept for compatibility
+// All colors are now managed in globals.css using CSS custom properties
+
 export const theme = {
   colors: {
-    primary: '#075E54',
-    secondary: '#25D366',
-    accent: '#128C7E',
-    background: '#ECE5DD',
-    card: '#FFFFFF',
-    text: '#000000',
-    textSecondary: '#555555',
-    border: '#CCCCCC',
+    primary: 'var(--color-primary)',
+    secondary: 'var(--color-secondary)', 
+    accent: 'var(--color-accent)',
+    background: 'var(--color-bg)',
+    card: 'var(--color-surface)',
+    text: 'var(--color-text)',
+    textSecondary: 'var(--color-text-muted)',
+    border: 'var(--color-border)',
   },
   radius: {
-    card: '8px',
+    card: 'var(--radius-lg)',
+    sm: 'var(--radius-sm)',
+    md: 'var(--radius-md)', 
+    lg: 'var(--radius-lg)',
+    xl: 'var(--radius-xl)',
   },
 };

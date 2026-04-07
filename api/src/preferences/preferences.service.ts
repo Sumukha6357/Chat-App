@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { UserPreferences, UserPreferencesDocument } from './schemas/user-preferences.schema';
-import { UserSidebarState, UserSidebarStateDocument } from './schemas/user-sidebar-state.schema';
+import {
+  UserPreferences,
+  UserPreferencesDocument,
+} from './schemas/user-preferences.schema';
+import {
+  UserSidebarState,
+  UserSidebarStateDocument,
+} from './schemas/user-sidebar-state.schema';
 import {
   UserChannelFavorite,
   UserChannelFavoriteDocument,
@@ -11,8 +17,14 @@ import {
   UserWorkspaceOrder,
   UserWorkspaceOrderDocument,
 } from './schemas/user-workspace-order.schema';
-import { UserLastState, UserLastStateDocument } from './schemas/user-last-state.schema';
-import { UserChannelDraft, UserChannelDraftDocument } from './schemas/user-channel-draft.schema';
+import {
+  UserLastState,
+  UserLastStateDocument,
+} from './schemas/user-last-state.schema';
+import {
+  UserChannelDraft,
+  UserChannelDraftDocument,
+} from './schemas/user-channel-draft.schema';
 import {
   UserChannelNotificationSetting,
   UserChannelNotificationSettingDocument,
@@ -39,7 +51,9 @@ export class PreferencesService {
 
   async getPreferences(userId: string) {
     const objectId = new Types.ObjectId(userId);
-    const doc = await this.preferencesModel.findOne({ userId: objectId }).lean();
+    const doc = await this.preferencesModel
+      .findOne({ userId: objectId })
+      .lean();
     if (doc) return doc;
     return this.preferencesModel.create({ userId: objectId });
   }
@@ -47,7 +61,11 @@ export class PreferencesService {
   async updatePreferences(userId: string, patch: Partial<UserPreferences>) {
     const objectId = new Types.ObjectId(userId);
     return this.preferencesModel
-      .findOneAndUpdate({ userId: objectId }, { $set: patch }, { upsert: true, new: true })
+      .findOneAndUpdate(
+        { userId: objectId },
+        { $set: patch },
+        { upsert: true, new: true },
+      )
       .lean();
   }
 
@@ -70,13 +88,24 @@ export class PreferencesService {
     },
   ) {
     const objectId = new Types.ObjectId(userId);
-    const current = await this.sidebarModel.findOne({ userId: objectId }).lean();
+    const current = await this.sidebarModel
+      .findOne({ userId: objectId })
+      .lean();
     const nextSection = {
-      favorites: patch.sectionCollapsed?.favorites ?? current?.sectionCollapsed?.favorites ?? false,
+      favorites:
+        patch.sectionCollapsed?.favorites ??
+        current?.sectionCollapsed?.favorites ??
+        false,
       textChannels:
-        patch.sectionCollapsed?.textChannels ?? current?.sectionCollapsed?.textChannels ?? false,
-      voice: patch.sectionCollapsed?.voice ?? current?.sectionCollapsed?.voice ?? true,
-      dms: patch.sectionCollapsed?.dms ?? current?.sectionCollapsed?.dms ?? false,
+        patch.sectionCollapsed?.textChannels ??
+        current?.sectionCollapsed?.textChannels ??
+        false,
+      voice:
+        patch.sectionCollapsed?.voice ??
+        current?.sectionCollapsed?.voice ??
+        true,
+      dms:
+        patch.sectionCollapsed?.dms ?? current?.sectionCollapsed?.dms ?? false,
     };
     return this.sidebarModel
       .findOneAndUpdate(
@@ -116,7 +145,10 @@ export class PreferencesService {
     const objectId = new Types.ObjectId(userId);
     const doc = await this.orderModel.findOne({ userId: objectId }).lean();
     if (doc) return doc.workspaceOrder || [];
-    const created = await this.orderModel.create({ userId: objectId, workspaceOrder: [] });
+    const created = await this.orderModel.create({
+      userId: objectId,
+      workspaceOrder: [],
+    });
     return created.workspaceOrder;
   }
 
@@ -142,7 +174,11 @@ export class PreferencesService {
   async updateLastState(userId: string, patch: Partial<UserLastState>) {
     const objectId = new Types.ObjectId(userId);
     return this.lastStateModel
-      .findOneAndUpdate({ userId: objectId }, { $set: patch }, { upsert: true, new: true })
+      .findOneAndUpdate(
+        { userId: objectId },
+        { $set: patch },
+        { upsert: true, new: true },
+      )
       .lean();
   }
 
@@ -172,7 +208,9 @@ export class PreferencesService {
   }
 
   async listNotificationSettings(userId: string) {
-    return this.notificationModel.find({ userId: new Types.ObjectId(userId) }).lean();
+    return this.notificationModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .lean();
   }
 
   async setNotificationSetting(
@@ -183,7 +221,10 @@ export class PreferencesService {
   ) {
     return this.notificationModel
       .findOneAndUpdate(
-        { userId: new Types.ObjectId(userId), roomId: new Types.ObjectId(roomId) },
+        {
+          userId: new Types.ObjectId(userId),
+          roomId: new Types.ObjectId(roomId),
+        },
         { $set: { level, quietHoursEnabled } },
         { upsert: true, new: true },
       )

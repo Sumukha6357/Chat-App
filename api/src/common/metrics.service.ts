@@ -20,14 +20,19 @@ export class MetricsService {
 
   async getMetrics() {
     const start = Date.now();
-    const [onlineUsers, wsConnections, messagesPerMinute, notificationsQueued, notificationsProcessed] =
-      await Promise.all([
-        this.redis.scard(this.key('online_users')),
-        this.redis.get(this.key('ws:connections')),
-        this.redis.get(this.key('metrics:messages:1m')),
-        this.redis.get(this.key('metrics:notifications:queued')),
-        this.redis.get(this.key('metrics:notifications:processed')),
-      ]);
+    const [
+      onlineUsers,
+      wsConnections,
+      messagesPerMinute,
+      notificationsQueued,
+      notificationsProcessed,
+    ] = await Promise.all([
+      this.redis.scard(this.key('online_users')),
+      this.redis.get(this.key('ws:connections')),
+      this.redis.get(this.key('metrics:messages:1m')),
+      this.redis.get(this.key('metrics:notifications:queued')),
+      this.redis.get(this.key('metrics:notifications:processed')),
+    ]);
     const latencyMs = Date.now() - start;
 
     return {

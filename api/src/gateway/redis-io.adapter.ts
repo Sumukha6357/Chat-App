@@ -7,13 +7,18 @@ import { ConfigService } from '../config/config.service';
 export class RedisIoAdapter extends IoAdapter {
   private adapterConstructor?: ReturnType<typeof createAdapter>;
 
-  constructor(private readonly app: INestApplicationContext, private readonly config: ConfigService) {
+  constructor(
+    private readonly app: INestApplicationContext,
+    private readonly config: ConfigService,
+  ) {
     super(app);
   }
 
   async connectToRedis(): Promise<void> {
     if (process.env.WS_REDIS_ENABLED === 'false') {
-      console.log('WS: Redis adapter disabled via config, using in-memory adapter');
+      console.log(
+        'WS: Redis adapter disabled via config, using in-memory adapter',
+      );
       return;
     }
 
@@ -37,7 +42,10 @@ export class RedisIoAdapter extends IoAdapter {
       this.adapterConstructor = createAdapter(pubClient, subClient);
       console.log('WS: Redis adapter connected');
     } catch (err) {
-      console.warn('WS: Failed to connect to Redis, falling back to in-memory adapter', err);
+      console.warn(
+        'WS: Failed to connect to Redis, falling back to in-memory adapter',
+        err,
+      );
     }
   }
 

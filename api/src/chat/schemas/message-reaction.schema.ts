@@ -20,6 +20,9 @@ export class MessageReaction {
   emoji!: string;
 }
 
-export const MessageReactionSchema = SchemaFactory.createForClass(MessageReaction);
-MessageReactionSchema.index({ messageId: 1, userId: 1, emoji: 1 }, { unique: true });
-
+export const MessageReactionSchema =
+  SchemaFactory.createForClass(MessageReaction);
+MessageReactionSchema.index(
+  { messageId: 1, userId: 1, emoji: 1 },
+  { unique: true },
+);

@@ -31,7 +31,7 @@ export class RoomsController {
     private readonly messages: MessagesService,
     private readonly urlShortener: UrlShortenerService,
     private readonly config: ConfigService,
-  ) { }
+  ) {}
 
   @Get()
   async list(@Req() req: any) {
@@ -44,8 +44,13 @@ export class RoomsController {
     const enriched = await Promise.all(
       rooms.map(async (room: any) => {
         const state = readByRoom.get(room._id.toString());
-        const lastReadAt = state?.lastReadAt ? new Date(state.lastReadAt) : undefined;
-        const unreadCount = await this.rooms.getUnreadCount(room._id.toString(), lastReadAt);
+        const lastReadAt = state?.lastReadAt
+          ? new Date(state.lastReadAt)
+          : undefined;
+        const unreadCount = await this.rooms.getUnreadCount(
+          room._id.toString(),
+          lastReadAt,
+        );
         return {
           ...room,
           unreadCount,
@@ -59,7 +64,9 @@ export class RoomsController {
 
   @Post()
   async create(@Req() req: any, @Body() dto: CreateRoomDto) {
-    const members = dto.members ? Array.from(new Set([...dto.members, req.user.sub])) : [req.user.sub];
+    const members = dto.members
+      ? Array.from(new Set([...dto.members, req.user.sub]))
+      : [req.user.sub];
     return this.rooms.createRoom({
       name: dto.name,
       nameLower: dto.name.toLowerCase(),
@@ -75,17 +82,24 @@ export class RoomsController {
     const term = (q || '').trim().toLowerCase();
     if (!term) return [];
     const rooms = await this.rooms.findByMember(req.user.sub);
-    const filtered = rooms.filter(
-      (r: any) => (r.nameLower || r.name?.toLowerCase?.() || '').includes(term),
+    const filtered = rooms.filter((r: any) =>
+      (r.nameLower || r.name?.toLowerCase?.() || '').includes(term),
     );
     const roomIds = filtered.map((r: any) => r._id.toString());
     const readState = await this.rooms.getRoomReadState(roomIds, req.user.sub);
-    const readByRoom = new Map<string, any>(readState.map((r: any) => [r.roomId.toString(), r]));
+    const readByRoom = new Map<string, any>(
+      readState.map((r: any) => [r.roomId.toString(), r]),
+    );
     const enriched = await Promise.all(
       filtered.map(async (room: any) => {
         const state = readByRoom.get(room._id.toString());
-        const lastReadAt = state?.lastReadAt ? new Date(state.lastReadAt) : undefined;
-        const unreadCount = await this.rooms.getUnreadCount(room._id.toString(), lastReadAt);
+        const lastReadAt = state?.lastReadAt
+          ? new Date(state.lastReadAt)
+          : undefined;
+        const unreadCount = await this.rooms.getUnreadCount(
+          room._id.toString(),
+          lastReadAt,
+        );
         return {
           ...room,
           unreadCount,
@@ -98,7 +112,11 @@ export class RoomsController {
   }
 
   @Patch(':id')
-  async update(@Param('id') roomSlug: string, @Req() req: any, @Body() body: any) {
+  async update(
+    @Param('id') roomSlug: string,
+    @Req() req: any,
+    @Body() body: any,
+  ) {
     const room = await this.rooms.findByIdOrSlug(roomSlug);
     if (!room) throw new NotFoundException('Room not found');
     const roomId = room._id.toString();
@@ -151,7 +169,9 @@ export class RoomsController {
     if (!isMember) throw new ForbiddenException('Not a member of this room');
 
     const state = await this.rooms.getRoomReadState([roomId], req.user.sub);
-    const lastReadAt = state[0]?.lastReadAt ? new Date(state[0].lastReadAt) : undefined;
+    const lastReadAt = state[0]?.lastReadAt
+      ? new Date(state[0].lastReadAt)
+      : undefined;
     const unreadCount = await this.rooms.getUnreadCount(roomId, lastReadAt);
 
     return {
@@ -173,7 +193,10 @@ export class RoomsController {
     const roomId = room._id.toString();
 
     // Guard: ignore invalid message IDs (prevents 400 for temporal client-side IDs)
-    if (body.lastReadMessageId && !Types.ObjectId.isValid(body.lastReadMessageId)) {
+    if (
+      body.lastReadMessageId &&
+      !Types.ObjectId.isValid(body.lastReadMessageId)
+    ) {
       return { roomId, ok: true, ignored: true };
     }
 
@@ -187,7 +210,11 @@ export class RoomsController {
       body.lastReadMessageId,
       body.lastReadAt,
     );
-    return { roomId, lastReadMessageId: body.lastReadMessageId, lastReadAt: body.lastReadAt };
+    return {
+      roomId,
+      lastReadMessageId: body.lastReadMessageId,
+      lastReadAt: body.lastReadAt,
+    };
   }
 
   @Post(':id/invite-link')
@@ -200,8 +227,13 @@ export class RoomsController {
 
     const shareId = room.slug || roomId;
     const longUrl = `${this.config.get('inviteBaseUrl')}/rooms/${shareId}?invite=1`;
-    const alias = `chat-${shareId}`.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 28);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const alias = `chat-${shareId}`
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
+      .slice(0, 28);
+    const expiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000,
+    ).toISOString();
     const shortUrl = await this.urlShortener.shorten(longUrl, alias, expiresAt);
     return {
       feature: 'invite-links',

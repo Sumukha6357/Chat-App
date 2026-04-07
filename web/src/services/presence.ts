@@ -34,28 +34,31 @@ export function attachPresenceListeners() {
   socketRef = connectSocket(token);
   if (!socketRef) return;
 
-  onPresenceUpdate = (payload) => {
+  onPresenceUpdate = (payload: {
+    userId?: string;
+    status?: 'online' | 'offline' | 'away';
+    lastSeenAt?: number | string;
+    roomId?: string;
+    onlineCount?: number;
+    count?: number;
+    room?: string;
+  }) => {
     if (!payload) return;
-    if ('userId' in payload && payload.userId && payload.status) {
+    if (payload.userId && payload.status) {
       updatePresence(payload.userId, payload.status);
-      const lastSeenAt =
-        typeof (payload as any).lastSeenAt === 'number'
-          ? (payload as any).lastSeenAt
-          : (payload as any).lastSeenAt
-            ? new Date((payload as any).lastSeenAt).getTime()
+      const lastSeenAt: number | undefined =
+        typeof payload.lastSeenAt === 'number'
+          ? payload.lastSeenAt
+          : payload.lastSeenAt
+            ? new Date(payload.lastSeenAt).getTime()
             : undefined;
       useChatStore.getState().upsertUserPresence(payload.userId, payload.status, lastSeenAt);
     }
-    const roomId =
-      'roomId' in payload && payload.roomId
-        ? payload.roomId
-        : 'room' in payload && payload.room
-          ? payload.room
-          : undefined;
+    const roomId = payload.roomId || payload.room;
     const onlineCount =
-      'onlineCount' in payload && typeof payload.onlineCount === 'number'
+      typeof payload.onlineCount === 'number'
         ? payload.onlineCount
-        : 'count' in payload && typeof payload.count === 'number'
+        : typeof payload.count === 'number'
           ? payload.count
           : undefined;
     if (roomId && typeof onlineCount === 'number') {
@@ -63,7 +66,7 @@ export function attachPresenceListeners() {
     }
   };
 
-  onRoomPresence = (payload) => {
+  onRoomPresence = (payload: { roomId?: string; onlineCount?: number; count?: number; room?: string }) => {
     if (!payload) return;
     const roomId =
       payload.roomId || payload.room || undefined;

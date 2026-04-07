@@ -7,12 +7,18 @@ export type UserWorkspaceOrderDocument = HydratedDocument<UserWorkspaceOrder>;
 export class UserWorkspaceOrder {
   _id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  })
   userId!: Types.ObjectId;
 
   @Prop({ type: [String], default: [] })
   workspaceOrder!: string[];
 }
 
-export const UserWorkspaceOrderSchema = SchemaFactory.createForClass(UserWorkspaceOrder);
-
+export const UserWorkspaceOrderSchema =
+  SchemaFactory.createForClass(UserWorkspaceOrder);

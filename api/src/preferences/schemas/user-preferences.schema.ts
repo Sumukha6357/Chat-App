@@ -7,7 +7,13 @@ export type UserPreferencesDocument = HydratedDocument<UserPreferences>;
 export class UserPreferences {
   _id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  })
   userId!: Types.ObjectId;
 
   @Prop({ enum: ['dark', 'light', 'midnight'], default: 'dark' })
@@ -23,5 +29,5 @@ export class UserPreferences {
   sidebarCollapsed!: boolean;
 }
 
-export const UserPreferencesSchema = SchemaFactory.createForClass(UserPreferences);
-
+export const UserPreferencesSchema =
+  SchemaFactory.createForClass(UserPreferences);

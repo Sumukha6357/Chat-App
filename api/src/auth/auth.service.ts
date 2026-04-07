@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare, hash } from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,9 +30,14 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-  ) { }
+  ) {}
 
-  async register(email: string, username: string, password: string, avatar?: string) {
+  async register(
+    email: string,
+    username: string,
+    password: string,
+    avatar?: string,
+  ) {
     const existingEmail = await this.users.findByEmail(email);
     if (existingEmail) {
       throw new ConflictException('Email already in use');
@@ -39,8 +49,18 @@ export class AuthService {
     }
 
     const passwordHash = await hash(password, 12);
-    const user = await this.users.createUser({ email, username, passwordHash, avatar });
-    return this.signTokens(user._id.toString(), email, user.roles, user.username);
+    const user = await this.users.createUser({
+      email,
+      username,
+      passwordHash,
+      avatar,
+    });
+    return this.signTokens(
+      user._id.toString(),
+      email,
+      user.roles,
+      user.username,
+    );
   }
 
   async validateUser(email: string, password: string) {
@@ -59,7 +79,12 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await this.validateUser(email, password);
-    return this.signTokens(user._id.toString(), user.email, user.roles, user.username);
+    return this.signTokens(
+      user._id.toString(),
+      user.email,
+      user.roles,
+      user.username,
+    );
   }
 
   async refresh(refreshToken: string) {
@@ -70,10 +95,20 @@ export class AuthService {
     }
 
     await this.revokeRefreshToken(payload.jti, payload.exp);
-    return this.signTokens(payload.sub, payload.email, payload.roles, payload.username);
+    return this.signTokens(
+      payload.sub,
+      payload.email,
+      payload.roles,
+      payload.username,
+    );
   }
 
-  async signTokens(userId: string, email: string, roles: string[], username?: string) {
+  async signTokens(
+    userId: string,
+    email: string,
+    roles: string[],
+    username?: string,
+  ) {
     const accessPayload: JwtPayload = {
       sub: userId,
       email,
@@ -105,11 +140,16 @@ export class AuthService {
     return { accessToken, refreshToken, userId, username };
   }
 
-  async verifyRefreshToken(token: string): Promise<JwtPayload & { exp: number }> {
+  async verifyRefreshToken(
+    token: string,
+  ): Promise<JwtPayload & { exp: number }> {
     try {
-      const payload = await this.jwt.verifyAsync<JwtPayload & { exp: number }>(token, {
-        secret: this.config.get('jwtRefreshSecret'),
-      });
+      const payload = await this.jwt.verifyAsync<JwtPayload & { exp: number }>(
+        token,
+        {
+          secret: this.config.get('jwtRefreshSecret'),
+        },
+      );
       if (payload.type !== 'refresh') {
         throw new UnauthorizedException('Invalid token type');
       }

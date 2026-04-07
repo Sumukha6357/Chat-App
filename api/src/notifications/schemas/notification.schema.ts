@@ -10,7 +10,10 @@ export class Notification {
   @Prop({ type: Types.ObjectId, ref: 'User', index: true, required: true })
   userId!: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['message_received', 'mention', 'system_alert'] })
+  @Prop({
+    required: true,
+    enum: ['message_received', 'mention', 'system_alert'],
+  })
   type!: 'message_received' | 'mention' | 'system_alert';
 
   @Prop({ type: Object, required: true })

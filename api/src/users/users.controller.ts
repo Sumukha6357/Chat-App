@@ -1,4 +1,13 @@
-import { BadRequestException, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { PresenceService } from '../presence/presence.service';
@@ -13,7 +22,7 @@ export class UsersController {
     private readonly users: UsersService,
     private readonly presence: PresenceService,
     private readonly rooms: RoomsService,
-  ) { }
+  ) {}
 
   @Get('me')
   async me(@Req() req: any) {

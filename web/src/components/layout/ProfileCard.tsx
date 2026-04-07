@@ -20,7 +20,6 @@ export function ProfileCard({ onClose }: ProfileCardProps) {
     const router = useRouter();
     const username = useAuthStore((s) => s.username);
     const clear = useAuthStore((s) => s.clear);
-    const setTokens = useAuthStore((s) => s.setTokens);
     const { theme, toggleTheme } = useThemeStore();
     const showToast = useToastStore((s) => s.show);
 
@@ -38,7 +37,7 @@ export function ProfileCard({ onClose }: ProfileCardProps) {
     };
 
     useEffect(() => {
-        apiRequest<any>('/users/me', { auth: true })
+        apiRequest<{ avatar?: string }>('/users/me', { auth: true })
             .then((me) => { if (me?.avatar) setAvatarUrl(me.avatar); })
             .catch(() => { });
     }, []);
@@ -62,8 +61,9 @@ export function ProfileCard({ onClose }: ProfileCardProps) {
             const data = json?.data ?? json;
             setAvatarUrl(data.url);
             showToast('Avatar uploaded', 'success');
-        } catch (err: any) {
-            showToast(err.message || 'Upload failed', 'error');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Upload failed';
+            showToast(message, 'error');
         } finally {
             setUploading(false);
             e.target.value = '';
@@ -81,8 +81,9 @@ export function ProfileCard({ onClose }: ProfileCardProps) {
             }
             showToast('Name updated', 'success');
             setEditingName(false);
-        } catch (err: any) {
-            showToast(err.message || 'Failed to update name', 'error');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update name';
+            showToast(message, 'error');
         } finally {
             setSaving(false);
         }

@@ -3,7 +3,7 @@ import { create } from 'zustand';
 export interface NotificationItem {
   _id: string;
   type: string;
-  payload: Record<string, any> | string;
+  payload: Record<string, unknown> | string;
   read: boolean;
   createdAt: string;
 }

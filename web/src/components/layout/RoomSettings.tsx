@@ -2,16 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useToastStore } from '@/store/toastStore';
 import { apiRequest } from '@/services/api';
+import { Room } from '@/store/chatStore';
 import { Avatar } from '../ui/Avatar';
 import {
     HiXMark, HiPencil, HiPhoto, HiUserGroup,
-    HiCheckCircle, HiTrash, HiLockClosed, HiGlobeAlt,
+    HiCheckCircle, HiLockClosed, HiGlobeAlt,
 } from 'react-icons/hi2';
 
 interface RoomSettingsProps {
-    room: any;
+    room: Room;
     onClose: () => void;
-    onRoomUpdated?: (room: any) => void;
+    onRoomUpdated?: (room: Room) => void;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -27,14 +28,14 @@ export function RoomSettings({ room, onClose, onRoomUpdated }: RoomSettingsProps
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | undefined>(room?.avatar);
-    const [members, setMembers] = useState<any[]>([]);
+    const [members, setMembers] = useState<Array<{ _id?: string; userId: string; username?: string; role: string }>>([]);
     const fileRef = useRef<HTMLInputElement>(null);
 
-    const isAdmin = room?.adminIds?.includes(me) || room?.members?.[0] === me;
+    const isAdmin = me ? (room?.adminIds?.includes(me) || room?.members?.[0] === me) : false;
 
     useEffect(() => {
         if (!room?._id) return;
-        apiRequest<any>(`/rooms/${room._id}`, { auth: true })
+        apiRequest<{ members: Array<{ userId: string; role: string }>; avatar?: string; description?: string }>(`/rooms/${room._id}`, { auth: true })
             .then((r) => {
                 setMembers(r.members || []);
                 if (r.avatar) setAvatarUrl(r.avatar);
@@ -64,8 +65,9 @@ export function RoomSettings({ room, onClose, onRoomUpdated }: RoomSettingsProps
             // Update room avatar
             await apiRequest(`/rooms/${room._id}`, { method: 'PATCH', auth: true, body: { avatar: data.url } });
             showToast('Room image updated', 'success');
-        } catch (err: any) {
-            showToast(err.message || 'Upload failed', 'error');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Upload failed';
+            showToast(message, 'error');
         } finally {
             setUploading(false);
             e.target.value = '';
@@ -75,16 +77,17 @@ export function RoomSettings({ room, onClose, onRoomUpdated }: RoomSettingsProps
     const handleSave = async (field: 'name' | 'description') => {
         setSaving(true);
         try {
-            const body: any = {};
+            const body: { name?: string; description?: string } = {};
             if (field === 'name') body.name = name.trim();
             if (field === 'description') body.description = description.trim();
-            const updated = await apiRequest<any>(`/rooms/${room._id}`, { method: 'PATCH', auth: true, body });
+            const updated = await apiRequest<Room>(`/rooms/${room._id}`, { method: 'PATCH', auth: true, body });
             onRoomUpdated?.(updated);
             showToast(`Room ${field} updated`, 'success');
             if (field === 'name') setEditingName(false);
             if (field === 'description') setEditingDesc(false);
-        } catch (err: any) {
-            showToast(err.message || 'Failed to update', 'error');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update';
+            showToast(message, 'error');
         } finally {
             setSaving(false);
         }
@@ -199,12 +202,12 @@ export function RoomSettings({ room, onClose, onRoomUpdated }: RoomSettingsProps
                         <div>
                             <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2 block">Members</label>
                             <div className="space-y-1">
-                                {members.map((m: any) => (
-                                    <div key={m._id || m} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--color-surface-2)] transition-colors">
-                                        <Avatar name={m.username || m} size={32} />
+                                {members.map((m) => (
+                                    <div key={m._id || m.userId} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--color-surface-2)] transition-colors">
+                                        <Avatar name={m.username || m.userId} size={32} />
                                         <div>
-                                            <p className="text-sm font-semibold text-[var(--color-text)]">{m.username || m}</p>
-                                            {room?.adminIds?.includes(m._id || m) && (
+                                            <p className="text-sm font-semibold text-[var(--color-text)]">{m.username || m.userId}</p>
+                                            {room?.adminIds?.includes(m.userId) && (
                                                 <p className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest">Admin</p>
                                             )}
                                         </div>

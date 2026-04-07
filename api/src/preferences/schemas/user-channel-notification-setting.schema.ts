@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
-export type UserChannelNotificationSettingDocument = HydratedDocument<UserChannelNotificationSetting>;
+export type UserChannelNotificationSettingDocument =
+  HydratedDocument<UserChannelNotificationSetting>;
 
 @Schema({ timestamps: true, collection: 'user_channel_notification_settings' })
 export class UserChannelNotificationSetting {
@@ -20,8 +21,9 @@ export class UserChannelNotificationSetting {
   quietHoursEnabled!: boolean;
 }
 
-export const UserChannelNotificationSettingSchema = SchemaFactory.createForClass(
-  UserChannelNotificationSetting,
+export const UserChannelNotificationSettingSchema =
+  SchemaFactory.createForClass(UserChannelNotificationSetting);
+UserChannelNotificationSettingSchema.index(
+  { userId: 1, roomId: 1 },
+  { unique: true },
 );
-UserChannelNotificationSettingSchema.index({ userId: 1, roomId: 1 }, { unique: true });
-

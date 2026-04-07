@@ -10,11 +10,15 @@ export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
   imports: [
     MongooseModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get('mongoUri'),
-        retryWrites: true,
-        serverSelectionTimeoutMS: 5000,
-      }),
+      useFactory: (config: ConfigService) => {
+        const mongoUri = config.get('mongoUri');
+        console.log('Connecting to MongoDB:', mongoUri);
+        return {
+          uri: mongoUri,
+          retryWrites: true,
+          serverSelectionTimeoutMS: 5000,
+        };
+      },
     }),
   ],
   providers: [
@@ -39,4 +43,4 @@ export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
   ],
   exports: [MongooseModule, REDIS_CLIENT],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}

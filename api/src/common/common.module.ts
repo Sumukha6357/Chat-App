@@ -50,4 +50,4 @@ import { UrlShortenerService } from './utils/url-shortener.service';
   ],
   exports: [AppLogger, RateLimitService, UrlShortenerService],
 })
-export class CommonModule { }
+export class CommonModule {}

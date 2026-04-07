@@ -25,7 +25,12 @@ import { MarkReadDto } from './dto/mark-read.dto';
 import { JwtPayload } from '../auth/auth.service';
 import { REDIS_CLIENT } from '../database/database.module';
 import { Redis } from 'ioredis';
-import { Inject, OnApplicationShutdown, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Inject,
+  OnApplicationShutdown,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 
 @WebSocketGateway({
   namespace: '/ws',
@@ -60,7 +65,7 @@ export class ChatGateway implements OnApplicationShutdown {
     private readonly rateLimit: RateLimitService,
     private readonly gatewayService: GatewayService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
-  ) { }
+  ) {}
 
   afterInit() {
     this.gatewayService.setServer(this.server);
@@ -78,7 +83,9 @@ export class ChatGateway implements OnApplicationShutdown {
         status: 'online',
         lastSeenAt: Date.now(),
       });
-      await this.redis.incr(`${this.config.get('redisKeyPrefix')}ws:connections`);
+      await this.redis.incr(
+        `${this.config.get('redisKeyPrefix')}ws:connections`,
+      );
     } catch {
       client.disconnect();
     }
@@ -88,7 +95,10 @@ export class ChatGateway implements OnApplicationShutdown {
     const payload = client.data.user as JwtPayload | undefined;
     if (!payload) return;
     await this.presence.removeSocket(payload.sub, client.id);
-    const affectedRooms = await this.presence.removeSocketFromAllRooms(client.id, payload.sub);
+    const affectedRooms = await this.presence.removeSocketFromAllRooms(
+      client.id,
+      payload.sub,
+    );
     for (const roomId of affectedRooms) {
       const onlineCount = await this.presence.getRoomOnlineCount(roomId);
       this.server.to(roomId).emit('room_presence', { roomId, onlineCount });
@@ -108,7 +118,10 @@ export class ChatGateway implements OnApplicationShutdown {
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('join_room')
-  async handleJoinRoom(@MessageBody() body: JoinRoomDto, @ConnectedSocket() client: Socket) {
+  async handleJoinRoom(
+    @MessageBody() body: JoinRoomDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const payload = client.data.user as JwtPayload;
     const isMember = await this.rooms.isMember(body.roomId, payload.sub);
     if (!isMember) {
@@ -116,10 +129,18 @@ export class ChatGateway implements OnApplicationShutdown {
     }
     const room = await this.rooms.findById(body.roomId);
     if (room?.type === 'direct' && Array.isArray(room.members)) {
-      const otherId = room.members.find((id: any) => id.toString() !== payload.sub);
+      const otherId = room.members.find(
+        (id: any) => id.toString() !== payload.sub,
+      );
       if (otherId) {
-        const blockedByOther = await this.users.hasBlocked(otherId.toString(), payload.sub);
-        const blockedByMe = await this.users.hasBlocked(payload.sub, otherId.toString());
+        const blockedByOther = await this.users.hasBlocked(
+          otherId.toString(),
+          payload.sub,
+        );
+        const blockedByMe = await this.users.hasBlocked(
+          payload.sub,
+          otherId.toString(),
+        );
         if (blockedByOther || blockedByMe) {
           throw new WsException('User is blocked');
         }
@@ -129,14 +150,19 @@ export class ChatGateway implements OnApplicationShutdown {
     await client.join(body.roomId);
     await this.presence.addUserToRoom(body.roomId, payload.sub, client.id);
     const onlineCount = await this.presence.getRoomOnlineCount(body.roomId);
-    this.server.to(body.roomId).emit('room_presence', { roomId: body.roomId, onlineCount });
+    this.server
+      .to(body.roomId)
+      .emit('room_presence', { roomId: body.roomId, onlineCount });
     client.emit('room_presence', { roomId: body.roomId, onlineCount });
     return { event: 'joined_room', data: { roomId: body.roomId } };
   }
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('leave_room')
-  async handleLeaveRoom(@MessageBody() body: JoinRoomDto, @ConnectedSocket() client: Socket) {
+  async handleLeaveRoom(
+    @MessageBody() body: JoinRoomDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const payload = client.data.user as JwtPayload;
     const isMember = await this.rooms.isMember(body.roomId, payload.sub);
     if (!isMember) {
@@ -146,13 +172,18 @@ export class ChatGateway implements OnApplicationShutdown {
     await client.leave(body.roomId);
     await this.presence.removeUserFromRoom(body.roomId, payload.sub, client.id);
     const onlineCount = await this.presence.getRoomOnlineCount(body.roomId);
-    this.server.to(body.roomId).emit('room_presence', { roomId: body.roomId, onlineCount });
+    this.server
+      .to(body.roomId)
+      .emit('room_presence', { roomId: body.roomId, onlineCount });
     return { event: 'left_room', data: { roomId: body.roomId } };
   }
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('room_presence_sync')
-  async handleRoomPresenceSync(@MessageBody() body: JoinRoomDto, @ConnectedSocket() client: Socket) {
+  async handleRoomPresenceSync(
+    @MessageBody() body: JoinRoomDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const payload = client.data.user as JwtPayload;
     const isMember = await this.rooms.isMember(body.roomId, payload.sub);
     if (!isMember) {
@@ -164,26 +195,36 @@ export class ChatGateway implements OnApplicationShutdown {
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('typing_start')
-  async handleTypingStart(@MessageBody() body: TypingDto, @ConnectedSocket() client: Socket) {
+  async handleTypingStart(
+    @MessageBody() body: TypingDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const payload = client.data.user as JwtPayload;
     const isMember = await this.rooms.isMember(body.roomId, payload.sub);
     if (!isMember) {
       throw new WsException('Not a room member');
     }
     await this.rateLimit.consume(`ws:${payload.sub}:typing`, 1);
-    this.server.to(body.roomId).emit('typing_start', { roomId: body.roomId, userId: payload.sub });
+    this.server
+      .to(body.roomId)
+      .emit('typing_start', { roomId: body.roomId, userId: payload.sub });
   }
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('typing_stop')
-  async handleTypingStop(@MessageBody() body: TypingDto, @ConnectedSocket() client: Socket) {
+  async handleTypingStop(
+    @MessageBody() body: TypingDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const payload = client.data.user as JwtPayload;
     const isMember = await this.rooms.isMember(body.roomId, payload.sub);
     if (!isMember) {
       throw new WsException('Not a room member');
     }
     await this.rateLimit.consume(`ws:${payload.sub}:typing`, 1);
-    this.server.to(body.roomId).emit('typing_stop', { roomId: body.roomId, userId: payload.sub });
+    this.server
+      .to(body.roomId)
+      .emit('typing_stop', { roomId: body.roomId, userId: payload.sub });
   }
 
   @UseGuards(WsJwtGuard)
@@ -194,21 +235,37 @@ export class ChatGateway implements OnApplicationShutdown {
     ack?: (response: unknown) => void,
   ) {
     const payload = client.data.user as JwtPayload;
+    console.log('Backend received message:', { body, userId: payload.sub });
+
     try {
-      await this.rateLimit.consumeWithLimit(`ws:${payload.sub}:send_message`, 5, 3, 1);
+      await this.rateLimit.consumeWithLimit(
+        `ws:${payload.sub}:send_message`,
+        5,
+        3,
+        1,
+      );
 
       const room = await this.rooms.findById(body.roomId);
+      console.log('Room found:', !!room, 'roomId:', body.roomId);
       if (!room) {
+        console.log('Room not found, throwing error');
         throw new WsException('Room not found');
       }
       const isMember = await this.rooms.isMember(body.roomId, payload.sub);
+      console.log('User is member:', isMember);
       if (!isMember) {
+        console.log('User not member, throwing error');
         throw new WsException('Not a room member');
       }
       if (room.type === 'direct' && Array.isArray(room.members)) {
-        const otherId = room.members.find((id: any) => id.toString() !== payload.sub);
+        const otherId = room.members.find(
+          (id: any) => id.toString() !== payload.sub,
+        );
         if (otherId) {
-          const blockedByOther = await this.users.hasBlocked(otherId.toString(), payload.sub);
+          const blockedByOther = await this.users.hasBlocked(
+            otherId.toString(),
+            payload.sub,
+          );
           if (blockedByOther) {
             throw new WsException('User is blocked');
           }
@@ -236,10 +293,19 @@ export class ChatGateway implements OnApplicationShutdown {
         attachments: body.attachments || [],
       });
 
+      console.log('Message created in database:', message);
+
       this.server.to(body.roomId).emit('message', message);
+      console.log('Message broadcasted to room:', body.roomId);
       ack?.({ ok: true, messageId: (message as any)._id });
-      await this.redis.incr(`${this.config.get('redisKeyPrefix')}metrics:messages:1m`);
-      await this.redis.expire(`${this.config.get('redisKeyPrefix')}metrics:messages:1m`, 60);
+      console.log('Acknowledgment sent to client');
+      await this.redis.incr(
+        `${this.config.get('redisKeyPrefix')}metrics:messages:1m`,
+      );
+      await this.redis.expire(
+        `${this.config.get('redisKeyPrefix')}metrics:messages:1m`,
+        60,
+      );
 
       const offlineMembers = (room.members || []).filter(
         (member) => member.toString() !== payload.sub,
@@ -247,10 +313,14 @@ export class ChatGateway implements OnApplicationShutdown {
 
       await Promise.all(
         offlineMembers.map(async (memberId) => {
-          await this.notifications.notifyUser(memberId.toString(), 'message_received', {
-            roomId: body.roomId,
-            messageId: (message as any)._id,
-          });
+          await this.notifications.notifyUser(
+            memberId.toString(),
+            'message_received',
+            {
+              roomId: body.roomId,
+              messageId: (message as any)._id,
+            },
+          );
         }),
       );
     } catch (error: any) {
@@ -262,7 +332,10 @@ export class ChatGateway implements OnApplicationShutdown {
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('mark_read')
-  async handleMarkRead(@MessageBody() body: MarkReadDto, @ConnectedSocket() client: Socket) {
+  async handleMarkRead(
+    @MessageBody() body: MarkReadDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const payload = client.data.user as JwtPayload;
     const isMember = await this.rooms.isMember(body.roomId, payload.sub);
     if (!isMember) {
@@ -292,7 +365,9 @@ export class ChatGateway implements OnApplicationShutdown {
   }
 
   private async validateSocket(client: Socket): Promise<JwtPayload> {
-    const token = client.handshake?.auth?.token || client.handshake?.headers?.authorization?.split(' ')[1];
+    const token =
+      client.handshake?.auth?.token ||
+      client.handshake?.headers?.authorization?.split(' ')[1];
     if (!token) {
       throw new WsException('Missing token');
     }

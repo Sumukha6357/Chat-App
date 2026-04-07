@@ -11,7 +11,10 @@ async function login(user: { email: string; password: string }) {
   const res = await request(API_URL).post('/auth/login').send(user);
   expect(res.status).toBe(201);
   const data = res.body.data || res.body;
-  return { accessToken: data.accessToken as string, userId: data.userId as string };
+  return {
+    accessToken: data.accessToken as string,
+    userId: data.userId as string,
+  };
 }
 
 async function getRooms(token: string) {
@@ -85,8 +88,12 @@ describe('WebSocket E2E', () => {
     socketA = connectSocket(tokenA);
     socketB = connectSocket(tokenB);
 
-    await new Promise<void>((resolve) => socketA.on('connect', () => resolve()));
-    await new Promise<void>((resolve) => socketB.on('connect', () => resolve()));
+    await new Promise<void>((resolve) =>
+      socketA.on('connect', () => resolve()),
+    );
+    await new Promise<void>((resolve) =>
+      socketB.on('connect', () => resolve()),
+    );
 
     socketA.emit('join_room', { roomId });
     socketB.emit('join_room', { roomId });
@@ -95,7 +102,11 @@ describe('WebSocket E2E', () => {
     expect(roomPresence.roomId).toBe(roomId);
 
     const messagePromise = waitForEvent(socketB, 'message');
-    socketA.emit('send_message', { roomId, content: 'hello ws', clientMessageId: 'ws-1' });
+    socketA.emit('send_message', {
+      roomId,
+      content: 'hello ws',
+      clientMessageId: 'ws-1',
+    });
     const msg = await messagePromise;
     expect(msg.roomId).toBe(roomId);
     expect(msg.content).toBe('hello ws');
@@ -109,7 +120,9 @@ describe('WebSocket E2E', () => {
 
   it('Rate limit triggers for send_message', async () => {
     socketA = connectSocket(tokenA);
-    await new Promise<void>((resolve) => socketA.on('connect', () => resolve()));
+    await new Promise<void>((resolve) =>
+      socketA.on('connect', () => resolve()),
+    );
     socketA.emit('join_room', { roomId });
 
     const errorPromise = waitForEvent(socketA, 'error', 7000);
@@ -131,7 +144,9 @@ describe('WebSocket E2E', () => {
       .set('authorization', `Bearer ${adminToken}`);
 
     socketB = connectSocket(tokenB);
-    await new Promise<void>((resolve) => socketB.on('connect', () => resolve()));
+    await new Promise<void>((resolve) =>
+      socketB.on('connect', () => resolve()),
+    );
 
     const errorPromise = waitForEvent(socketB, 'error', 7000);
     socketB.emit('send_message', {
